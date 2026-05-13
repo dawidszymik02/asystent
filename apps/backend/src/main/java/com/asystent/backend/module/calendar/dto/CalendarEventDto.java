@@ -30,4 +30,5 @@ public class CalendarEventDto {
     private Boolean isCancelled;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
+    private UUID recurrenceParentId;
 }

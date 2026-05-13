@@ -42,11 +42,21 @@ Osobista aplikacja fullstack — osobisty asystent z modułami: Kalendarz, Praca
 Wszystkie endpointy wymagają JWT (Bearer token). userId wyciągany z tokena, nie z body.
 
 ### Wydarzenia
-- GET    /events?from=&to=   — lista wydarzeń (opcjonalny filtr dat ISO-8601)
+- GET    /events?from=&to=   — lista wydarzeń; gdy podano from+to, zwraca rozwinięte wystąpienia cykliczne
 - GET    /events/{id}         — pojedyncze wydarzenie
 - POST   /events              — utwórz wydarzenie (201)
 - PUT    /events/{id}         — aktualizuj wydarzenie (częściowa — null = bez zmian)
-- DELETE /events/{id}         — soft delete (is_cancelled = true)
+- DELETE /events/{id}?deleteMode=single|all&occurrenceDate=ISO  
+  — deleteMode=all (domyślny): soft delete całej serii (is_cancelled=true)  
+  — deleteMode=single: dodaje occurrenceDate do excluded_dates (wymaga occurrenceDate)
+
+### Cykliczne wydarzenia
+- Pole recurrence_rule przechowuje RRULE (format iCal): FREQ=DAILY|WEEKLY|MONTHLY|YEARLY
+  Opcje: INTERVAL=N, BYDAY=MO,TU,..., BYMONTHDAY=N, COUNT=N, UNTIL=YYYYMMDDTHHMMSSZ
+- RecurrenceService.expandRecurringEvents() — rozszerza listę eventów o wygenerowane wystąpienia
+- Maksymalnie 500 wystąpień na event na jedno zapytanie
+- Pole excluded_dates (TEXT, JSON array) — wykluczenia pojedynczych wystąpień
+- recurrenceParentId w DTO — ustawiony na id eventu-rodzica dla wygenerowanych wystąpień
 
 ### Kategorie
 - GET    /categories           — lista kategorii użytkownika

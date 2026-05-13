@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -21,20 +23,28 @@ public class CalendarService {
 
     private final CalendarEventRepository eventRepository;
     private final CalendarCategoryRepository categoryRepository;
+    private final RecurrenceService recurrenceService;
 
     public CalendarService(CalendarEventRepository eventRepository,
-                           CalendarCategoryRepository categoryRepository) {
+                           CalendarCategoryRepository categoryRepository,
+                           RecurrenceService recurrenceService) {
         this.eventRepository = eventRepository;
         this.categoryRepository = categoryRepository;
+        this.recurrenceService = recurrenceService;
     }
 
     public List<CalendarEventDto> getEvents(UUID userId, OffsetDateTime from, OffsetDateTime to) {
         List<CalendarEvent> events = (from == null || to == null)
                 ? eventRepository.findByUserIdAndIsCancelledFalseOrderByStartTimeAsc(userId)
-                : eventRepository.findByUserIdAndStartTimeBetweenAndIsCancelledFalse(userId, from, to);
+                : eventRepository.findEventsForExpansion(userId, from, to);
 
         Map<UUID, CalendarCategory> categoriesById = loadCategoriesMap(userId);
-        return events.stream().map(e -> toEventDto(e, categoriesById)).toList();
+        List<CalendarEventDto> expanded = recurrenceService.expandRecurringEvents(events, categoriesById, from, to);
+        return expanded.stream()
+                .sorted(java.util.Comparator.comparing(
+                        CalendarEventDto::getStartTime,
+                        java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())))
+                .toList();
     }
 
     public CalendarEventDto getEvent(UUID userId, UUID eventId) {
@@ -88,10 +98,15 @@ public class CalendarService {
     }
 
     @Transactional
-    public void deleteEvent(UUID userId, UUID eventId) {
+    public void deleteEvent(UUID userId, UUID eventId, String deleteMode, OffsetDateTime occurrenceDate) {
         CalendarEvent event = eventRepository.findByIdAndUserId(eventId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + eventId));
-        event.setIsCancelled(true);
+
+        if ("single".equals(deleteMode) && event.getRecurrenceRule() != null && occurrenceDate != null) {
+            event.setExcludedDates(addToExcludedDates(event.getExcludedDates(), occurrenceDate));
+        } else {
+            event.setIsCancelled(true);
+        }
         eventRepository.save(event);
     }
 
@@ -128,6 +143,16 @@ public class CalendarService {
         CalendarCategory category = categoryRepository.findByIdAndUserId(categoryId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found: " + categoryId));
         categoryRepository.delete(category);
+    }
+
+    private String addToExcludedDates(String existing, OffsetDateTime date) {
+        String dateStr = "\"" + date.withOffsetSameInstant(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ISO_OFFSET_DATE_TIME) + "\"";
+        if (existing == null || existing.isBlank() || "[]".equals(existing.trim())) {
+            return "[" + dateStr + "]";
+        }
+        String trimmed = existing.trim();
+        return trimmed.substring(0, trimmed.length() - 1) + "," + dateStr + "]";
     }
 
     private Map<UUID, CalendarCategory> loadCategoriesMap(UUID userId) {

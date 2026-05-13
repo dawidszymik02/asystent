@@ -60,6 +60,9 @@ public class CalendarEvent {
     @Column(name = "recurrence_end_date")
     private OffsetDateTime recurrenceEndDate;
 
+    @Column(name = "excluded_dates", columnDefinition = "TEXT")
+    private String excludedDates;
+
     @Column(name = "reminder_minutes")
     private Integer reminderMinutes;
 

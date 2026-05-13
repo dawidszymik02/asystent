@@ -58,8 +58,10 @@ public class CalendarController {
     @DeleteMapping("/events/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteEvent(
             Authentication auth,
-            @PathVariable UUID id) {
-        calendarService.deleteEvent(getUserId(auth), id);
+            @PathVariable UUID id,
+            @RequestParam(required = false, defaultValue = "all") String deleteMode,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime occurrenceDate) {
+        calendarService.deleteEvent(getUserId(auth), id, deleteMode, occurrenceDate);
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
