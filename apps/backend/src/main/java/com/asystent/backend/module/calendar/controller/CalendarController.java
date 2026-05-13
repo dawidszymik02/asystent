@@ -4,13 +4,13 @@ import com.asystent.backend.common.ApiResponse;
 import com.asystent.backend.module.calendar.dto.*;
 import com.asystent.backend.module.calendar.service.CalendarService;
 import jakarta.validation.Valid;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,9 +27,10 @@ public class CalendarController {
     @GetMapping("/events")
     public ResponseEntity<ApiResponse<List<CalendarEventDto>>> getEvents(
             Authentication auth,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
-        return ResponseEntity.ok(ApiResponse.ok(calendarService.getEvents(getUserId(auth), from, to)));
+            @RequestParam(required = false) String from,
+            @RequestParam(required = false) String to) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                calendarService.getEvents(getUserId(auth), parseDate(from), parseDate(to))));
     }
 
     @GetMapping("/events/{id}")
@@ -60,8 +61,8 @@ public class CalendarController {
             Authentication auth,
             @PathVariable UUID id,
             @RequestParam(required = false, defaultValue = "all") String deleteMode,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime occurrenceDate) {
-        calendarService.deleteEvent(getUserId(auth), id, deleteMode, occurrenceDate);
+            @RequestParam(required = false) String occurrenceDate) {
+        calendarService.deleteEvent(getUserId(auth), id, deleteMode, parseDate(occurrenceDate));
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
@@ -92,6 +93,14 @@ public class CalendarController {
             @PathVariable UUID id) {
         calendarService.deleteCategory(getUserId(auth), id);
         return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    private OffsetDateTime parseDate(String dateStr) {
+        if (dateStr == null) return null;
+        if (!dateStr.endsWith("Z") && !dateStr.contains("+")) {
+            dateStr = dateStr + "Z";
+        }
+        return OffsetDateTime.parse(dateStr).withOffsetSameInstant(ZoneOffset.UTC);
     }
 
     private UUID getUserId(Authentication auth) {

@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-import { format } from 'date-fns';
 import { api } from '../lib/api';
 import { useCalendarStore } from '../store/calendarStore';
 
@@ -11,8 +10,8 @@ export const useCalendar = () => {
     try {
       const response = await api.get('/calendar/events', {
         params: {
-          from: format(from, "yyyy-MM-dd'T'HH:mm:ss"),
-          to: format(to, "yyyy-MM-dd'T'HH:mm:ss"),
+          from: from.toISOString(),
+          to: to.toISOString(),
         },
       });
       setEvents(response.data.data ?? []);
