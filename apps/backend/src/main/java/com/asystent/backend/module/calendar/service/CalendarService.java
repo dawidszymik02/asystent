@@ -6,6 +6,7 @@ import com.asystent.backend.module.calendar.entity.CalendarCategory;
 import com.asystent.backend.module.calendar.entity.CalendarEvent;
 import com.asystent.backend.module.calendar.repository.CalendarCategoryRepository;
 import com.asystent.backend.module.calendar.repository.CalendarEventRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class CalendarService {
 
@@ -34,17 +36,22 @@ public class CalendarService {
     }
 
     public List<CalendarEventDto> getEvents(UUID userId, OffsetDateTime from, OffsetDateTime to) {
-        List<CalendarEvent> events = (from == null || to == null)
-                ? eventRepository.findByUserIdAndIsCancelledFalseOrderByStartTimeAsc(userId)
-                : eventRepository.findEventsForExpansion(userId, from, to);
+        try {
+            List<CalendarEvent> events = (from == null || to == null)
+                    ? eventRepository.findByUserIdAndIsCancelledFalseOrderByStartTimeAsc(userId)
+                    : eventRepository.findEventsForExpansion(userId, from, to);
 
-        Map<UUID, CalendarCategory> categoriesById = loadCategoriesMap(userId);
-        List<CalendarEventDto> expanded = recurrenceService.expandRecurringEvents(events, categoriesById, from, to);
-        return expanded.stream()
-                .sorted(java.util.Comparator.comparing(
-                        CalendarEventDto::getStartTime,
-                        java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())))
-                .toList();
+            Map<UUID, CalendarCategory> categoriesById = loadCategoriesMap(userId);
+            List<CalendarEventDto> expanded = recurrenceService.expandRecurringEvents(events, categoriesById, from, to);
+            return expanded.stream()
+                    .sorted(java.util.Comparator.comparing(
+                            CalendarEventDto::getStartTime,
+                            java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())))
+                    .toList();
+        } catch (Exception e) {
+            log.error("Error fetching events for user {}: ", userId, e);
+            throw e;
+        }
     }
 
     public CalendarEventDto getEvent(UUID userId, UUID eventId) {

@@ -8,6 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useColorScheme } from 'react-native';
+import { useRouter } from 'expo-router';
 import { colors } from '../../src/theme/colors';
 import { Input } from '../../src/components/ui/Input';
 import { Button } from '../../src/components/ui/Button';
@@ -19,6 +20,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const signIn = useAuthStore((state) => state.signIn);
+  const router = useRouter();
   const scheme = useColorScheme() ?? 'dark';
   const theme = colors[scheme];
 
@@ -31,6 +33,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await signIn(email.trim(), password);
+      router.replace('/(app)');
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Błąd logowania';
       setError(message);
