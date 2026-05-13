@@ -30,6 +30,14 @@ Osobista aplikacja fullstack — osobisty asystent z modułami: Kalendarz, Praca
 - Backend: cd apps/backend && ./mvnw spring-boot:run
 - Wszystko naraz (dev): npm run dev (z root)
 
+## Baza danych
+- Supabase PostgreSQL
+- Tabele: profiles, calendar_events
+- RLS włączone na wszystkich tabelach
+- Migracje: trzymamy w apps/backend/src/main/resources/migrations/
+- Spring Boot łączy się bezpośrednio przez JDBC (nie przez Supabase API)
+- Frontend łączy się przez Supabase JS client (publishable key)
+
 ## Ważne zasady dla Claude Code
 - Zawsze sprawdzaj ten plik przed rozpoczęciem pracy
 - Nowe moduły dodawaj jako osobne feature foldery
