@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf apps/mobile/.git apps/web/.git)",
+      "Bash(git rm *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(.\\\\mvnw clean *)",
+      "PowerShell(git add *)"
+    ]
+  }
+}

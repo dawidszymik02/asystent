@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(set SUPABASE_JWT_SECRET=placeholder-secret-for-build-test-32chars)",
+      "Bash(./mvnw compile *)",
+      "Bash(git -C C:\\\\asystent status)",
+      "Bash(git -C C:\\\\asystent diff --stat)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\asystent\\\\apps\\\\backend\\\\src\\\\main\\\\java\\\\com\\\\asystent\\\\backend\" -Recurse -Force)",
+      "Bash(Select-Object FullName)",
+      "Bash(Sort-Object FullName)",
+      "Bash(./mvnw clean *)",
+      "Bash(git commit *)",
+      "PowerShell(if \\(Test-Path \"C:\\\\asystent\\\\node_modules\\\\react\\\\package.json\"\\) { \\(Get-Content \"C:\\\\asystent\\\\node_modules\\\\react\\\\package.json\" | ConvertFrom-Json\\).version } else { \"No root React\" })",
+      "PowerShell(if \\(Test-Path \"C:\\\\asystent\\\\apps\\\\mobile\\\\node_modules\\\\react\\\\package.json\"\\) { \\(Get-Content \"C:\\\\asystent\\\\apps\\\\mobile\\\\node_modules\\\\react\\\\package.json\" | ConvertFrom-Json\\).version } else { \"No mobile React\" })",
+      "PowerShell(Get-ChildItem \"C:\\\\asystent\\\\node_modules\\\\react-native\" -ErrorAction SilentlyContinue | Select-Object -First 1 Name; if \\(Test-Path \"C:\\\\asystent\\\\node_modules\\\\react-native\\\\package.json\"\\) { \\(Get-Content \"C:\\\\asystent\\\\node_modules\\\\react-native\\\\package.json\" | ConvertFrom-Json\\).version } else { \"No root react-native\" })",
+      "PowerShell(Get-ChildItem \"C:\\\\asystent\\\\node_modules\\\\react-native-calendars\" -ErrorAction SilentlyContinue | Select-Object -First 1; if \\(Test-Path \"C:\\\\asystent\\\\node_modules\\\\react-native-calendars\\\\package.json\"\\) { $pkg = Get-Content \"C:\\\\asystent\\\\node_modules\\\\react-native-calendars\\\\package.json\" | ConvertFrom-Json; $pkg.peerDependencies } else { \"Not in root\" })",
+      "PowerShell(Write-Host \"Root React:\"; \\(Get-Content \"C:\\\\asystent\\\\node_modules\\\\react\\\\package.json\" | ConvertFrom-Json\\).version; Write-Host \"Mobile React:\"; if \\(Test-Path \"C:\\\\asystent\\\\apps\\\\mobile\\\\node_modules\\\\react\\\\package.json\"\\) { \\(Get-Content \"C:\\\\asystent\\\\apps\\\\mobile\\\\node_modules\\\\react\\\\package.json\" | ConvertFrom-Json\\).version } else { \"Not found \\(hoisted to root - OK\\)\" }; Write-Host \"Web React:\"; if \\(Test-Path \"C:\\\\asystent\\\\apps\\\\web\\\\node_modules\\\\react\\\\package.json\"\\) { \\(Get-Content \"C:\\\\asystent\\\\apps\\\\web\\\\node_modules\\\\react\\\\package.json\" | ConvertFrom-Json\\).version } else { \"Not found \\(hoisted to root - OK\\)\" })",
+      "PowerShell(\\(Get-Content \"C:\\\\asystent\\\\node_modules\\\\react-dom\\\\package.json\" | ConvertFrom-Json\\).version; Write-Host \"Root react-dom version above\")",
+      "PowerShell(Test-Path *)",
+      "PowerShell(Write-Host \"=== Root React ===\"; \\(Get-Content \"C:\\\\asystent\\\\node_modules\\\\react\\\\package.json\" | ConvertFrom-Json\\).version; Write-Host \"=== Root React-DOM ===\"; if \\(Test-Path \"C:\\\\asystent\\\\node_modules\\\\react-dom\\\\package.json\"\\) { \\(Get-Content \"C:\\\\asystent\\\\node_modules\\\\react-dom\\\\package.json\" | ConvertFrom-Json\\).version } else { \"Not in root\" }; Write-Host \"=== Mobile React ===\"; if \\(Test-Path \"C:\\\\asystent\\\\apps\\\\mobile\\\\node_modules\\\\react\\\\package.json\"\\) { \\(Get-Content \"C:\\\\asystent\\\\apps\\\\mobile\\\\node_modules\\\\react\\\\package.json\" | ConvertFrom-Json\\).version } else { \"Hoisted to root \\(OK\\)\" }; Write-Host \"=== Web React ===\"; if \\(Test-Path \"C:\\\\asystent\\\\apps\\\\web\\\\node_modules\\\\react\\\\package.json\"\\) { \\(Get-Content \"C:\\\\asystent\\\\apps\\\\web\\\\node_modules\\\\react\\\\package.json\" | ConvertFrom-Json\\).version } else { \"Hoisted to root \\(OK\\)\" })",
+      "PowerShell(node -e \"const l=require\\('C:/asystent/package-lock.json'\\); const r=l.packages['node_modules/react']; console.log\\('root react:', r?.version, '| resolved:', r?.resolved?.split\\('/react/-/'\\)[1]?.split\\('.tgz'\\)[0]\\)\")",
+      "PowerShell(node -e \"const l=require\\('C:/asystent/package-lock.json'\\); const pkgs=Object.entries\\(l.packages\\).filter\\(\\([k,v]\\)=>v.peerDependencies?.react?.includes\\('19.2'\\)||v.dependencies?.react?.includes\\('19.2'\\)\\); pkgs.forEach\\(\\([k]\\)=>console.log\\(k\\)\\)\" 2>&1 | Select-Object -First 20)",
+      "PowerShell(node -e \"const l=require\\('C:/asystent/package-lock.json'\\); const rd=l.packages['node_modules/react-dom']; console.log\\('root react-dom version:', rd?.version\\); console.log\\('overrides in lockfile:', JSON.stringify\\(l.packages[''].overrides\\)\\)\")",
+      "PowerShell(npm *)",
+      "PowerShell(if \\(Test-Path \"C:\\\\asystent\\\\apps\\\\web\\\\node_modules\\\\react-dom\\\\package.json\"\\) { \\(Get-Content \"C:\\\\asystent\\\\apps\\\\web\\\\node_modules\\\\react-dom\\\\package.json\" | ConvertFrom-Json\\).version } else { \"Hoisted to root\" }; node -e \"const l=require\\('C:/asystent/package-lock.json'\\); const entries=Object.entries\\(l.packages\\).filter\\(\\([k,v]\\)=>k.includes\\('react-dom'\\)\\); entries.forEach\\(\\([k,v]\\)=>console.log\\(k, v.version\\)\\)\")",
+      "PowerShell(node -e \"const l=require\\('C:/asystent/package-lock.json'\\); const entries=Object.entries\\(l.packages\\).filter\\(\\([k,v]\\)=>\\(v.dependencies?.['react-dom']||v.peerDependencies?.['react-dom']\\)&&!k.startsWith\\('apps/'\\)\\); entries.slice\\(0,10\\).forEach\\(\\([k,v]\\)=>console.log\\(k, '| dep:', v.dependencies?.['react-dom'], '| peer:', v.peerDependencies?.['react-dom']\\)\\)\")",
+      "PowerShell(node -e \"const l=require\\('C:/asystent/package-lock.json'\\); const rd=l.packages['node_modules/react-dom']; console.log\\(JSON.stringify\\({version:rd?.version, resolved:rd?.resolved, inBundle:rd?.inBundle, extraneous:rd?.extraneous, peer:rd?.peer, dev:rd?.dev, link:rd?.link}, null, 2\\)\\)\")",
+      "PowerShell(if \\(Test-Path \"C:\\\\asystent\\\\apps\\\\mobile\\\\node_modules\\\\react\\\\package.json\"\\) { \\(Get-Content \"C:\\\\asystent\\\\apps\\\\mobile\\\\node_modules\\\\react\\\\package.json\" | ConvertFrom-Json\\).version } else { \"Not installed\" })",
+      "PowerShell(Write-Host \"=== mobile/node_modules/react ===\"; \\(Get-Content \"C:\\\\asystent\\\\apps\\\\mobile\\\\node_modules\\\\react\\\\package.json\" | ConvertFrom-Json\\).version; Write-Host \"=== root/node_modules/react ===\"; \\(Get-Content \"C:\\\\asystent\\\\node_modules\\\\react\\\\package.json\" | ConvertFrom-Json\\).version; Write-Host \"=== metro.config.js ===\"; Get-Content \"C:\\\\asystent\\\\apps\\\\mobile\\\\metro.config.js\")",
+      "Bash(Get-ChildItem -Recurse -Name \"C:\\\\asystent\\\\apps\\\\mobile\\\\app\")",
+      "Bash(Sort-Object)"
+    ]
+  }
+}

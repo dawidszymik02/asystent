@@ -9,6 +9,8 @@ const api = axios.create({
 
 api.interceptors.request.use(async (config) => {
   const { data: { session } } = await supabase.auth.getSession();
+  console.log('Token:', session?.access_token ? 'EXISTS - ' + session.access_token.substring(0, 20) + '...' : 'NULL');
+  console.log('Request URL:', config.url);
   if (session?.access_token) {
     config.headers.Authorization = `Bearer ${session.access_token}`;
   }
