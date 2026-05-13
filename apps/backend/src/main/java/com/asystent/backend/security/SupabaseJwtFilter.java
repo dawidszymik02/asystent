@@ -1,31 +1,25 @@
 package com.asystent.backend.security;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.crypto.SecretKey;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Collections;
+import java.util.Map;
 
 @Component
 public class SupabaseJwtFilter extends OncePerRequestFilter {
 
-    private final SecretKey secretKey;
-
-    public SupabaseJwtFilter(@Value("${supabase.jwt-secret}") String jwtSecret) {
-        this.secretKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-    }
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -42,17 +36,20 @@ public class SupabaseJwtFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         try {
-            Claims claims = Jwts.parser()
-                    .verifyWith(secretKey)
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
+            Map<String, Object> claims = extractClaims(token);
 
-            String userId = claims.getSubject();
+            Number exp = (Number) claims.get("exp");
+            if (exp == null || exp.longValue() < System.currentTimeMillis() / 1000) {
+                throw new IllegalArgumentException("Token expired");
+            }
+
+            String userId = (String) claims.get("sub");
+            if (userId == null || userId.isBlank()) {
+                throw new IllegalArgumentException("Missing sub claim");
+            }
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
-
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } catch (Exception e) {
@@ -64,5 +61,13 @@ public class SupabaseJwtFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private Map<String, Object> extractClaims(String token) throws IOException {
+        String[] parts = token.split("\\.");
+        if (parts.length != 3) throw new IllegalArgumentException("Invalid JWT format");
+
+        byte[] payloadBytes = Base64.getUrlDecoder().decode(parts[1]);
+        return MAPPER.readValue(payloadBytes, new TypeReference<>() {});
     }
 }
