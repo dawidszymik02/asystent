@@ -22,7 +22,8 @@
         "backgroundColor": "#0A0A0A"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.dawidszymik02.asystent"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -37,6 +38,12 @@
         }
       ],
       "@react-native-community/datetimepicker"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "dfc2abc0-a7b9-46dc-9625-4e36c33e6b45"
+      }
+    }
   }
 }

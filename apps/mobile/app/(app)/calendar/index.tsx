@@ -9,6 +9,8 @@ import { startOfMonth, endOfMonth, format, parseISO } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { LocaleConfig } from 'react-native-calendars';
 import { colors } from '../../../src/theme/colors';
+import TaskList from '../../../src/components/calendar/TaskList';
+import { useTasks } from '../../../src/hooks/useTasks';
 
 LocaleConfig.locales['pl'] = {
   monthNames: ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec',
@@ -39,12 +41,17 @@ export default function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState(today);
   const [viewMode, setViewMode] = useState<ViewMode>('week');
   const { events, isLoading, fetchEvents, fetchCategories } = useCalendar();
+  const { fetchTasks } = useTasks();
 
   useEffect(() => {
     const now = new Date();
     fetchEvents(startOfMonth(now), endOfMonth(now));
     fetchCategories();
   }, []);
+
+  useEffect(() => {
+    fetchTasks(selectedDate);
+  }, [selectedDate]);
 
   const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode);
@@ -205,12 +212,16 @@ export default function CalendarScreen() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.list}
             ListHeaderComponent={
-              <View style={styles.listHeader}>
-                <Text style={[styles.listHeaderDay, { color: theme.text }]}>
-                  {format(new Date(selectedDate + 'T12:00:00'), 'EEEE', { locale: pl })}
-                </Text>
-                <Text style={[styles.listHeaderDate, { color: theme.textSecondary }]}>
-                  {format(new Date(selectedDate + 'T12:00:00'), 'd MMMM yyyy', { locale: pl })}
+              <View>
+                <TaskList date={selectedDate} />
+                <View style={[styles.eventsHeader, { borderTopColor: theme.border }]}>
+                  <Ionicons name="calendar-outline" size={14} color={theme.textMuted} />
+                  <Text style={[styles.eventsHeaderText, { color: theme.textMuted }]}>
+                    Wydarzenia
+                  </Text>
+                </View>
+                <Text style={[styles.dateHeader, { color: theme.textSecondary }]}>
+                  {format(new Date(selectedDate + 'T12:00:00'), 'EEEE, d MMMM yyyy', { locale: pl })}
                 </Text>
               </View>
             }
@@ -317,6 +328,25 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   categoryBadgeText: { fontSize: 11, fontWeight: '500' },
+  eventsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 4,
+    borderTopWidth: 1,
+  },
+  eventsHeaderText: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  dateHeader: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    fontSize: 13,
+  },
   fab: {
     position: 'absolute',
     bottom: 24,

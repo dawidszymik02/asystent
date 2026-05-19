@@ -15,7 +15,7 @@ export default function CalendarLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="new" options={{ title: 'Nowe wydarzenie' }} />
+      <Stack.Screen name="new" options={{ title: 'Nowe wydarzenie', headerRight: () => null }} />
       <Stack.Screen name="[id]" options={{ title: 'Szczegóły' }} />
       <Stack.Screen name="edit/[id]" options={{ title: 'Edytuj wydarzenie' }} />
       <Stack.Screen name="reminders" options={{ title: 'Przypomnienia' }} />
