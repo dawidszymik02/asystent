@@ -8,7 +8,9 @@
       "Bash(.\\\\mvnw clean *)",
       "PowerShell(git add *)",
       "Bash(Remove-Item *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(git push *)",
+      "PowerShell(git push *)"
     ]
   }
 }
