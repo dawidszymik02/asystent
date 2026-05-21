@@ -1,3 +1,5 @@
+import React from 'react';
+import { View, Text } from 'react-native';
 import { useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -14,6 +16,30 @@ Notifications.setNotificationHandler({
     shouldShowList: true,
   }),
 });
+class AppErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: string | null }
+> {
+  state: { error: string | null } = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error: error.message + '\n' + error.stack };
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <View style={{ flex: 1, padding: 20, paddingTop: 60, backgroundColor: '#000' }}>
+          <Text selectable style={{ color: '#ff0000', fontSize: 11 }}>
+            {this.state.error}
+          </Text>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function RootLayout() {
   useNotificationSetup();
   const initialize = useAuthStore((state) => state.initialize);
@@ -35,12 +61,14 @@ export default function RootLayout() {
   }, [session, isLoading]);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(app)" />
-      </Stack>
-    </GestureHandlerRootView>
+    <AppErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="index" />
+          <Stack.Screen name="(auth)" />
+          <Stack.Screen name="(app)" />
+        </Stack>
+      </GestureHandlerRootView>
+    </AppErrorBoundary>
   );
 }
