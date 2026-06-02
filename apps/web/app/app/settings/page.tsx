@@ -1,3 +1,11 @@
+import PageLayout from '@/components/layout/PageLayout'
+
 export default function SettingsPage() {
-  return <h1 className="text-2xl font-semibold">Ustawienia</h1>
+  return (
+    <PageLayout title="Ustawienia">
+      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+        Sekcja w budowie...
+      </p>
+    </PageLayout>
+  )
 }

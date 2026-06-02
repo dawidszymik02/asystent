@@ -1,3 +1,12 @@
+'use client'
+
+import PageLayout from '@/components/layout/PageLayout'
+import TicketList from '@/components/tickets/TicketList'
+
 export default function TicketsPage() {
-  return <h1 className="text-2xl font-semibold">Zgłoszenia</h1>
+  return (
+    <PageLayout title="Zgłoszenia">
+      <TicketList />
+    </PageLayout>
+  )
 }

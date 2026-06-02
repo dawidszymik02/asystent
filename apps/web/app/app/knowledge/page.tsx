@@ -1,8 +1,8 @@
 import PageLayout from '@/components/layout/PageLayout'
 
-export default function TasksPage() {
+export default function KnowledgePage() {
   return (
-    <PageLayout title="Zadania">
+    <PageLayout title="Baza wiedzy">
       <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
         Sekcja w budowie...
       </p>

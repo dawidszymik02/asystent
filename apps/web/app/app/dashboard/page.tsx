@@ -1,3 +1,11 @@
+import PageLayout from '@/components/layout/PageLayout'
+
 export default function DashboardPage() {
-  return <h1 className="text-2xl font-semibold">Dashboard</h1>
+  return (
+    <PageLayout title="Dashboard">
+      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+        Sekcja w budowie...
+      </p>
+    </PageLayout>
+  )
 }

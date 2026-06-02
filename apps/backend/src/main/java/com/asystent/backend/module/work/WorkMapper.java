@@ -56,6 +56,20 @@ public final class WorkMapper {
         );
     }
 
+    public static WorkTicketStatusDto toDto(WorkTicketStatus status) {
+        return new WorkTicketStatusDto(
+                status.getId(),
+                status.getUserId(),
+                status.getKey(),
+                status.getLabel(),
+                status.getColor(),
+                status.getBgColor(),
+                status.getSortOrder(),
+                status.getIsActive(),
+                status.getCreatedAt()
+        );
+    }
+
     public static WorkTaskDto toDto(WorkTask task) {
         return new WorkTaskDto(
                 task.getId(),
