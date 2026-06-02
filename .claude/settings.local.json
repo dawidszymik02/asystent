@@ -19,7 +19,8 @@
       "PowerShell(Test-Path \"C:\\\\asystent\\\\apps\\\\backend\" -PathType Container; \\(Get-Item \"C:\\\\asystent\\\\apps\\\\backend\"\\).GetFileSystemInfos\\(\\).Count)",
       "PowerShell(\\(Get-Item \"C:\\\\asystent\\\\apps\\\\backend\"\\).GetFileSystemInfos\\(\\) | Select-Object Name, Attributes)",
       "PowerShell(cmd /c \"dir /a C:\\\\asystent\\\\apps\\\\backend\")",
-      "PowerShell(cmd /c \"dir /a /s C:\\\\asystent\\\\apps\\\\backend\\\\src\\\\main\\\\resources\")"
+      "PowerShell(cmd /c \"dir /a /s C:\\\\asystent\\\\apps\\\\backend\\\\src\\\\main\\\\resources\")",
+      "Bash(.\\\\mvnw spring-boot:run)"
     ]
   }
 }
