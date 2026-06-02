@@ -21,7 +21,9 @@
       "PowerShell(cmd /c \"dir /a C:\\\\asystent\\\\apps\\\\backend\")",
       "PowerShell(cmd /c \"dir /a /s C:\\\\asystent\\\\apps\\\\backend\\\\src\\\\main\\\\resources\")",
       "Bash(.\\\\mvnw spring-boot:run)",
-      "PowerShell(Stop-Job *)"
+      "PowerShell(Stop-Job *)",
+      "Bash(npx tsc *)",
+      "Bash(npx next *)"
     ]
   }
 }

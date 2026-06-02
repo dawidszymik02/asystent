@@ -134,9 +134,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   const [addingNote, setAddingNote] = useState(false)
   const [noteError, setNoteError] = useState('')
 
-  const [saving, setSaving] = useState(false)
-  const [statusFlash, setStatusFlash] = useState(false)
-  const [priorityFlash, setPriorityFlash] = useState(false)
+  const [flash, setFlash] = useState<'status' | 'priority' | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -166,27 +164,29 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
     load()
   }, [id])
 
-  async function handleAutoSave(field: 'status' | 'priority', value: string) {
-    if (!ticket || saving) return
-    setSaving(true)
+  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newStatus = e.target.value
+    if (!ticket || newStatus === ticket.status) return
     try {
-      const updated = await updateTicket(ticket.id, {
-        title: ticket.title,
-        status: field === 'status' ? value : ticket.status,
-        priority: field === 'priority' ? value : ticket.priority,
-      })
+      const updated = await updateTicket(ticket.id, { status: newStatus })
       setTicket(updated)
-      if (field === 'status') {
-        setStatusFlash(true)
-        setTimeout(() => setStatusFlash(false), 700)
-      } else {
-        setPriorityFlash(true)
-        setTimeout(() => setPriorityFlash(false), 700)
-      }
+      setFlash('status')
+      setTimeout(() => setFlash(null), 700)
     } catch {
-      // silently ignore — optimistic update already applied locally
-    } finally {
-      setSaving(false)
+      alert('Nie udało się zapisać statusu')
+    }
+  }
+
+  const handlePriorityChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newPriority = e.target.value
+    if (!ticket || newPriority === ticket.priority) return
+    try {
+      const updated = await updateTicket(ticket.id, { priority: newPriority })
+      setTicket(updated)
+      setFlash('priority')
+      setTimeout(() => setFlash(null), 700)
+    } catch {
+      alert('Nie udało się zapisać priorytetu')
     }
   }
 
@@ -225,18 +225,6 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   const programMap = Object.fromEntries(programs.map((p) => [p.id, p]))
   const program = ticket.programId ? programMap[ticket.programId] : undefined
   const currentStatus = statuses.find((s) => s.key === ticket.status)
-
-  const selectBase: React.CSSProperties = {
-    border: '1px solid #E5E7EB',
-    borderRadius: 6,
-    padding: '4px 8px',
-    fontSize: 13,
-    background: '#FFFFFF',
-    color: '#111827',
-    cursor: 'pointer',
-    outline: 'none',
-    transition: 'border-color 0.3s',
-  }
 
   return (
     <div style={{ maxWidth: 860, margin: '0 auto', padding: 24 }}>
@@ -324,9 +312,18 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>Status</div>
             <select
               value={ticket.status}
-              onChange={(e) => handleAutoSave('status', e.target.value)}
-              disabled={saving}
-              style={{ ...selectBase, borderColor: statusFlash ? '#10B981' : '#E5E7EB' }}
+              onChange={handleStatusChange}
+              style={{
+                border: flash === 'status' ? '1px solid #10B981' : '1px solid #E5E7EB',
+                borderRadius: '6px',
+                padding: '4px 8px',
+                fontSize: '13px',
+                background: 'white',
+                color: '#111827',
+                cursor: 'pointer',
+                transition: 'border-color 0.3s',
+                outline: 'none',
+              }}
             >
               {statuses.map((s) => (
                 <option key={s.key} value={s.key}>{s.label}</option>
@@ -338,9 +335,18 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 6 }}>Priorytet</div>
             <select
               value={ticket.priority}
-              onChange={(e) => handleAutoSave('priority', e.target.value)}
-              disabled={saving}
-              style={{ ...selectBase, borderColor: priorityFlash ? '#10B981' : '#E5E7EB' }}
+              onChange={handlePriorityChange}
+              style={{
+                border: flash === 'priority' ? '1px solid #10B981' : '1px solid #E5E7EB',
+                borderRadius: '6px',
+                padding: '4px 8px',
+                fontSize: '13px',
+                background: 'white',
+                color: '#111827',
+                cursor: 'pointer',
+                transition: 'border-color 0.3s',
+                outline: 'none',
+              }}
             >
               <option value="low">Niski</option>
               <option value="medium">Średni</option>

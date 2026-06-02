@@ -75,7 +75,7 @@ async function updateTicket(id: string, data: Partial<CreateTicketPayload>): Pro
     throw new Error(err.message ?? `Błąd aktualizacji zgłoszenia: ${res.status}`)
   }
   const json = await res.json()
-  return json.data as WorkTicket
+  return json.data ?? json
 }
 
 async function deleteTicket(id: string): Promise<void> {

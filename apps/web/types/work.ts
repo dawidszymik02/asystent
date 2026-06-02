@@ -48,3 +48,26 @@ export interface WorkTicketStatus {
   sortOrder: number
   isActive: boolean
 }
+
+export interface WorkTask {
+  id: string
+  title: string
+  description?: string
+  type: 'DEPLOYMENT' | 'TRAINING' | 'MIGRATION' | 'UPDATE' | 'OTHER'
+  clientName?: string
+  programId?: string
+  status: 'todo' | 'in_progress' | 'done' | 'cancelled'
+  dueDate?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateTaskPayload {
+  title: string
+  description?: string
+  type: string
+  clientName?: string
+  programId?: string
+  status: string
+  dueDate?: string
+}

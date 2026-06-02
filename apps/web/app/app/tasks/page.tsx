@@ -1,11 +1,12 @@
+'use client'
+
 import PageLayout from '@/components/layout/PageLayout'
+import TaskList from '@/components/tasks/TaskList'
 
 export default function TasksPage() {
   return (
     <PageLayout title="Zadania">
-      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-        Sekcja w budowie...
-      </p>
+      <TaskList />
     </PageLayout>
   )
 }
