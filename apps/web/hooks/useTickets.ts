@@ -40,12 +40,92 @@ async function fetchPrograms(): Promise<WorkProgram[]> {
   return json.data as WorkProgram[]
 }
 
+async function fetchAllPrograms(): Promise<WorkProgram[]> {
+  const headers = await getAuthHeader()
+  const res = await fetch(`${API}/work/programs/all`, { headers })
+  if (!res.ok) throw new Error(`${res.status}`)
+  const json = await res.json()
+  return (json.data ?? json) as WorkProgram[]
+}
+
+async function createProgram(data: {
+  name: string; shortCode: string; color: string; description?: string; isActive: boolean
+}): Promise<WorkProgram> {
+  const headers = await getAuthHeader()
+  const res = await fetch(`${API}/work/programs`, {
+    method: 'POST',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) throw new Error(`${res.status}`)
+  const json = await res.json()
+  return (json.data ?? json) as WorkProgram
+}
+
+async function updateProgram(id: string, data: Partial<WorkProgram>): Promise<WorkProgram> {
+  const headers = await getAuthHeader()
+  const res = await fetch(`${API}/work/programs/${id}`, {
+    method: 'PUT',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) throw new Error(`${res.status}`)
+  const json = await res.json()
+  return (json.data ?? json) as WorkProgram
+}
+
+async function deleteProgram(id: string): Promise<void> {
+  const headers = await getAuthHeader()
+  const res = await fetch(`${API}/work/programs/${id}`, { method: 'DELETE', headers })
+  if (!res.ok) throw new Error(`${res.status}`)
+}
+
 async function fetchStatuses(): Promise<WorkTicketStatus[]> {
   const headers = await getAuthHeader()
   const res = await fetch(`${API}/work/ticket-statuses`, { headers })
   if (!res.ok) throw new Error(`Błąd pobierania statusów: ${res.status}`)
   const json = await res.json()
   return json.data as WorkTicketStatus[]
+}
+
+async function fetchAllStatuses(): Promise<WorkTicketStatus[]> {
+  const headers = await getAuthHeader()
+  const res = await fetch(`${API}/work/ticket-statuses/all`, { headers })
+  if (!res.ok) throw new Error(`${res.status}`)
+  const json = await res.json()
+  return (json.data ?? json) as WorkTicketStatus[]
+}
+
+async function createStatus(data: {
+  key: string; label: string; color: string; bgColor: string; sortOrder: number; isActive: boolean
+}): Promise<WorkTicketStatus> {
+  const headers = await getAuthHeader()
+  const res = await fetch(`${API}/work/ticket-statuses`, {
+    method: 'POST',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) throw new Error(`${res.status}`)
+  const json = await res.json()
+  return (json.data ?? json) as WorkTicketStatus
+}
+
+async function updateStatus(id: string, data: Partial<WorkTicketStatus>): Promise<WorkTicketStatus> {
+  const headers = await getAuthHeader()
+  const res = await fetch(`${API}/work/ticket-statuses/${id}`, {
+    method: 'PUT',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) throw new Error(`${res.status}`)
+  const json = await res.json()
+  return (json.data ?? json) as WorkTicketStatus
+}
+
+async function deleteStatus(id: string): Promise<void> {
+  const headers = await getAuthHeader()
+  const res = await fetch(`${API}/work/ticket-statuses/${id}`, { method: 'DELETE', headers })
+  if (!res.ok) throw new Error(`${res.status}`)
 }
 
 async function createTicket(data: CreateTicketPayload): Promise<WorkTicket> {
@@ -109,7 +189,8 @@ async function addNote(ticketId: string, content: string): Promise<WorkTicketNot
 
 export {
   fetchTickets, fetchTicket,
-  fetchPrograms, fetchStatuses,
+  fetchPrograms, fetchAllPrograms, createProgram, updateProgram, deleteProgram,
+  fetchStatuses, fetchAllStatuses, createStatus, updateStatus, deleteStatus,
   createTicket, updateTicket, deleteTicket,
   fetchNotes, addNote,
 }

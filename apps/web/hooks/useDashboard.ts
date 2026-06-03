@@ -1,7 +1,6 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import type { WorkTask } from '@/types/work'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? ''
 
@@ -18,6 +17,15 @@ export interface CalendarEvent {
   endTime: string
   allDay?: boolean
   color?: string
+}
+
+export interface MobileTask {
+  id: string
+  title: string
+  date: string
+  completed: boolean
+  position: number
+  createdAt: string
 }
 
 async function getAuthHeader(): Promise<{ Authorization: string }> {
@@ -50,14 +58,13 @@ async function saveNote(content: string): Promise<DashboardNote> {
   return { id: d.id, content: d.content, updatedAt: d.updatedAt }
 }
 
-async function fetchTodayTasks(): Promise<WorkTask[]> {
+async function fetchTodayTasks(): Promise<MobileTask[]> {
   const headers = await getAuthHeader()
-  const res = await fetch(`${API}/work/tasks/by-status?status=todo`, { headers })
+  const today = new Date().toISOString().slice(0, 10)
+  const res = await fetch(`${API}/tasks?date=${today}`, { headers })
   if (!res.ok) throw new Error(`Błąd pobierania zadań: ${res.status}`)
   const json = await res.json()
-  const tasks = (json.data ?? json) as WorkTask[]
-  const today = new Date().toISOString().slice(0, 10)
-  return tasks.filter((t) => t.dueDate?.startsWith(today))
+  return (json.data ?? json) as MobileTask[]
 }
 
 async function fetchTodayEvents(): Promise<CalendarEvent[]> {

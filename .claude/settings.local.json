@@ -24,7 +24,13 @@
       "PowerShell(Stop-Job *)",
       "Bash(npx tsc *)",
       "Bash(npx next *)",
-      "Bash(.\\\\mvnw compile *)"
+      "Bash(.\\\\mvnw compile *)",
+      "PowerShell(Set-Location C:\\\\asystent\\\\apps\\\\web; Start-Process -NoNewWindow -FilePath \"npx\" -ArgumentList \"next\",\"dev\",\"--port\",\"3000\" -RedirectStandardOutput \"$env:TEMP\\\\nextjs_out.txt\" -RedirectStandardError \"$env:TEMP\\\\nextjs_err.txt\")",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Receive-Job *)",
+      "PowerShell(Invoke-WebRequest -Uri \"http://localhost:3000/app/dashboard\" -UseBasicParsing -TimeoutSec 5 | Select-Object StatusCode, StatusDescription)",
+      "PowerShell($r = Invoke-WebRequest -Uri \"http://localhost:3000/app/dashboard\" -UseBasicParsing; $r.Content | Select-String -Pattern \"Zrobione|Do zrobienia|Zadania na dzi|useDashboard\" | Select-Object -First 10)",
+      "PowerShell(Select-String *)"
     ]
   }
 }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Inbox } from 'lucide-react'
-import { fetchTickets, fetchPrograms, fetchStatuses } from '@/hooks/useTickets'
+import { fetchTickets, fetchPrograms, fetchAllStatuses } from '@/hooks/useTickets'
 import type { WorkTicket, WorkProgram, WorkTicketStatus } from '@/types/work'
 import CreateTicketModal from './CreateTicketModal'
 
@@ -23,15 +23,6 @@ const STATUS_BADGE: Record<string, { bg: string; color: string; label: string }>
   resolved: { bg: '#ECFDF5', color: '#059669',  label: 'rozwiązane' },
   closed:   { bg: '#F3F4F6', color: '#374151',  label: 'zamknięte' },
 }
-
-const FILTERS: { key: string; label: string }[] = [
-  { key: 'all',      label: 'Wszystkie' },
-  { key: 'new',      label: 'Nowe' },
-  { key: 'open',     label: 'Otwarte' },
-  { key: 'pending',  label: 'Oczekujące' },
-  { key: 'resolved', label: 'Rozwiązane' },
-  { key: 'closed',   label: 'Zamknięte' },
-]
 
 function formatDate(iso: string): string {
   const date = new Date(iso)
@@ -153,14 +144,14 @@ export default function TicketList() {
   const [statuses, setStatuses] = useState<WorkTicketStatus[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [activeFilter, setActiveFilter] = useState('all')
+  const [activeFilter, setActiveFilter] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
 
   async function load() {
     setLoading(true)
     setError('')
     try {
-      const [t, p, s] = await Promise.all([fetchTickets(), fetchPrograms(), fetchStatuses()])
+      const [t, p, s] = await Promise.all([fetchTickets(), fetchPrograms(), fetchAllStatuses()])
       setTickets(t)
       setPrograms(p)
       setStatuses(s)
@@ -175,7 +166,7 @@ export default function TicketList() {
 
   const programMap = Object.fromEntries(programs.map((p) => [p.id, p]))
 
-  const filtered = activeFilter === 'all'
+  const filtered = activeFilter === ''
     ? tickets
     : tickets.filter((t) => t.status === activeFilter)
 
@@ -211,7 +202,7 @@ export default function TicketList() {
       </div>
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-        {FILTERS.map(({ key, label }) => {
+        {[{ key: '', label: 'Wszystkie' }, ...statuses.map((s) => ({ key: s.key, label: s.label }))].map(({ key, label }) => {
           const active = activeFilter === key
           return (
             <button
@@ -241,7 +232,7 @@ export default function TicketList() {
         <div style={{ padding: '48px 0', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
           <Inbox size={40} color="#D1D5DB" />
           <span style={{ fontSize: 14, color: 'var(--text-muted)' }}>
-            {activeFilter === 'all' ? 'Brak zgłoszeń' : 'Brak zgłoszeń w tej kategorii'}
+            {activeFilter === '' ? 'Brak zgłoszeń' : 'Brak zgłoszeń w tej kategorii'}
           </span>
         </div>
       ) : (

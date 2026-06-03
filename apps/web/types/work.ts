@@ -19,6 +19,8 @@ export interface WorkProgram {
   name: string
   shortCode: string
   color: string
+  description?: string
+  isActive?: boolean
 }
 
 export interface CreateTicketPayload {

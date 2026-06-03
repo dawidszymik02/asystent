@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
 import {
   fetchNote,
   saveNote,
@@ -9,9 +8,8 @@ import {
   fetchTodayEvents,
   type DashboardNote,
   type CalendarEvent,
+  type MobileTask,
 } from '@/hooks/useDashboard'
-import { TASK_TYPES, TASK_STATUSES } from '@/hooks/useTasks'
-import type { WorkTask } from '@/types/work'
 
 function formatTime(iso: string): string {
   const d = new Date(iso)
@@ -52,7 +50,7 @@ export default function DashboardPage() {
   const [noteText, setNoteText] = useState('')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [savedAt, setSavedAt] = useState<string>('')
-  const [tasks, setTasks] = useState<WorkTask[]>([])
+  const [tasks, setTasks] = useState<MobileTask[]>([])
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -140,79 +138,45 @@ export default function DashboardPage() {
             {tasks.length === 0 ? (
               <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Brak zadań na dziś 🎉</p>
             ) : (
-              tasks.map((task) => {
-                const type = TASK_TYPES[task.type] ?? TASK_TYPES.OTHER
-                const status = TASK_STATUSES[task.status] ?? TASK_STATUSES.todo
-                return (
-                  <Link
-                    key={task.id}
-                    href={`/app/tasks/${task.id}`}
-                    style={{ textDecoration: 'none' }}
-                  >
-                    <div
+              tasks.map((task) => (
+                <div
+                  key={task.id}
+                  style={{
+                    background: '#fff',
+                    border: '1px solid var(--border)',
+                    borderRadius: 10,
+                    padding: '10px 14px',
+                    marginBottom: 8,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span
                       style={{
-                        background: '#fff',
-                        border: '1px solid var(--border)',
-                        borderRadius: 10,
-                        padding: '10px 14px',
-                        marginBottom: 8,
-                        cursor: 'pointer',
-                        transition: 'border-color 0.15s',
+                        flex: 1,
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: 'var(--text-primary)',
+                        textDecoration: task.completed ? 'line-through' : 'none',
                       }}
-                      onMouseEnter={(e) =>
-                        ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--accent)')
-                      }
-                      onMouseLeave={(e) =>
-                        ((e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)')
-                      }
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 500,
-                            color: type.color,
-                            background: type.bg,
-                            borderRadius: 4,
-                            padding: '2px 7px',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {type.label}
-                        </span>
-                        <span
-                          style={{
-                            flex: 1,
-                            fontSize: 13,
-                            fontWeight: 500,
-                            color: 'var(--text-primary)',
-                          }}
-                        >
-                          {task.title}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 500,
-                            color: status.color,
-                            background: status.bg,
-                            borderRadius: 4,
-                            padding: '2px 7px',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {status.label}
-                        </span>
-                      </div>
-                      {task.clientName && (
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
-                          {task.clientName}
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                )
-              })
+                      {task.title}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 500,
+                        color: task.completed ? '#16a34a' : '#9a3412',
+                        background: task.completed ? '#dcfce7' : '#ffedd5',
+                        borderRadius: 4,
+                        padding: '2px 7px',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {task.completed ? 'Zrobione' : 'Do zrobienia'}
+                    </span>
+                  </div>
+                </div>
+              ))
             )}
           </div>
 
