@@ -23,7 +23,8 @@
       "Bash(.\\\\mvnw spring-boot:run)",
       "PowerShell(Stop-Job *)",
       "Bash(npx tsc *)",
-      "Bash(npx next *)"
+      "Bash(npx next *)",
+      "Bash(.\\\\mvnw compile *)"
     ]
   }
 }
