@@ -36,6 +36,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/health").permitAll()
                 .requestMatchers("/api/v1/auth/**").permitAll()
+                .requestMatchers("/api/v1/calendar/**").authenticated()
+                .requestMatchers("/api/v1/work/**").authenticated()
+                .requestMatchers("/api/v1/knowledge/**").authenticated()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
