@@ -1,0 +1,1 @@
+-- tabele utworzone manualnie w Supabase (knowledge_tags, knowledge_document_tags)

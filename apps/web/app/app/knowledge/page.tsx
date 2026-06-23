@@ -1,11 +1,10 @@
 import PageLayout from '@/components/layout/PageLayout'
+import KnowledgeView from '@/components/knowledge/KnowledgeView'
 
 export default function KnowledgePage() {
   return (
     <PageLayout title="Baza wiedzy">
-      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-        Sekcja w budowie...
-      </p>
+      <KnowledgeView />
     </PageLayout>
   )
 }

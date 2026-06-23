@@ -2,6 +2,8 @@ package com.asystent.backend.exception;
 
 import com.asystent.backend.common.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -26,6 +28,18 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining(", "));
         log.error("Validation error: {}", errors);
         return ResponseEntity.badRequest().body(ApiResponse.error(errors));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrity(DataIntegrityViolationException ex) {
+        log.error("Data integrity violation: {}", ex.getMostSpecificCause().getMessage());
+        return ResponseEntity.badRequest().body(ApiResponse.error("Data integrity violation: " + ex.getMostSpecificCause().getMessage()));
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConstraintViolation(ConstraintViolationException ex) {
+        log.error("Constraint violation: {}", ex.getSQLException().getMessage());
+        return ResponseEntity.badRequest().body(ApiResponse.error("Constraint violation: " + ex.getSQLException().getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
