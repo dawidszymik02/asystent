@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import SidebarWrapper from '@/components/sidebar/SidebarWrapper'
+import AgentWidget from '@/components/agent/AgentWidget'
 
 export default async function AppLayout({
   children,
@@ -22,6 +23,7 @@ export default async function AppLayout({
       <main style={{ flex: 1, overflow: 'auto', background: 'var(--bg-page)' }}>
         {children}
       </main>
+      <AgentWidget />
     </div>
   )
 }
