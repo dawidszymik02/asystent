@@ -163,12 +163,13 @@ export default function DashboardPage() {
           maxWidth: 1200,
           margin: '0 auto',
           display: 'flex',
-          gap: 0,
+          gap: 24,
           alignItems: 'flex-start',
+          boxSizing: 'border-box',
         }}
       >
         {/* Left column */}
-        <div style={{ flex: '0 0 42%' }}>
+        <div style={{ flex: '0 0 42%', minWidth: 0 }}>
           {/* Tasks */}
           <div>
             <div
@@ -219,6 +220,7 @@ export default function DashboardPage() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 10,
+                    boxSizing: 'border-box',
                   }}
                   onMouseEnter={(e) => {
                     const btns = (e.currentTarget as HTMLDivElement).querySelector<HTMLDivElement>(
@@ -262,13 +264,13 @@ export default function DashboardPage() {
                   <span
                     style={{
                       flex: 1,
+                      minWidth: 0,
                       fontSize: 13,
                       fontWeight: 500,
                       color: task.completed ? 'var(--text-muted)' : 'var(--text-primary)',
                       textDecoration: task.completed ? 'line-through' : 'none',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
+                      wordBreak: 'break-word',
+                      overflowWrap: 'break-word',
                     }}
                   >
                     {task.title}
@@ -341,7 +343,16 @@ export default function DashboardPage() {
                     marginBottom: 8,
                   }}
                 >
-                  <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>
+                  <div
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 500,
+                      color: 'var(--text-primary)',
+                      minWidth: 0,
+                      wordBreak: 'break-word',
+                      overflowWrap: 'break-word',
+                    }}
+                  >
                     {event.title}
                   </div>
                   <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
@@ -356,7 +367,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Right column — Notepad */}
-        <div style={{ flex: '0 0 55%', marginLeft: 'auto' }}>
+        <div style={{ flex: '0 0 55%', minWidth: 0 }}>
           <div
             style={{
               background: '#fff',
