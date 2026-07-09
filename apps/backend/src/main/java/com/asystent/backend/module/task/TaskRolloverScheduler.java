@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class TaskScheduler {
+public class TaskRolloverScheduler {
 
     private final TaskService taskService;
 
