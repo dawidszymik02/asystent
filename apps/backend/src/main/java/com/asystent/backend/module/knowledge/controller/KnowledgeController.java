@@ -3,8 +3,11 @@ package com.asystent.backend.module.knowledge.controller;
 import com.asystent.backend.common.ApiResponse;
 import com.asystent.backend.module.knowledge.dto.CreateDocumentRequest;
 import com.asystent.backend.module.knowledge.dto.DocumentResponse;
+import com.asystent.backend.module.knowledge.dto.SearchRequest;
+import com.asystent.backend.module.knowledge.dto.SearchResponse;
 import com.asystent.backend.module.knowledge.dto.TagResponse;
 import com.asystent.backend.module.knowledge.service.KnowledgeService;
+import com.asystent.backend.module.knowledge.service.SearchService;
 import com.asystent.backend.module.knowledge.service.TagService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -23,10 +26,12 @@ public class KnowledgeController {
 
     private final KnowledgeService knowledgeService;
     private final TagService tagService;
+    private final SearchService searchService;
 
-    public KnowledgeController(KnowledgeService knowledgeService, TagService tagService) {
+    public KnowledgeController(KnowledgeService knowledgeService, TagService tagService, SearchService searchService) {
         this.knowledgeService = knowledgeService;
         this.tagService = tagService;
+        this.searchService = searchService;
     }
 
     @PostMapping("/documents")
@@ -48,6 +53,13 @@ public class KnowledgeController {
             @PathVariable UUID id) {
         knowledgeService.deleteDocument(getUserId(auth), id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<ApiResponse<SearchResponse>> search(
+            Authentication auth,
+            @Valid @RequestBody SearchRequest request) {
+        return ResponseEntity.ok(ApiResponse.ok(searchService.search(getUserId(auth), request)));
     }
 
     @GetMapping("/tags")

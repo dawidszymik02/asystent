@@ -61,7 +61,8 @@
       "PowerShell($p = Get-NetTCPConnection -LocalPort 8080 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess -First 1; if \\($p\\) { Stop-Process -Id $p -Force }; $LOG = \"C:\\\\Users\\\\Dell5550\\\\AppData\\\\Local\\\\Temp\\\\backend_run3.log\"; Start-Process -FilePath \"cmd.exe\" -ArgumentList \"/c cd /d C:\\\\asystent\\\\apps\\\\backend && .\\\\mvnw spring-boot:run > `\"$LOG`\" 2>&1\" -WindowStyle Hidden; $started=$false; for \\($i=0; $i -lt 40; $i++\\) { Start-Sleep 3; if \\(Test-Path $LOG\\) { $c = Get-Content $LOG -Raw -EA SilentlyContinue; if \\($c -match \"Started BackendApplication\"\\) { $started=$true; break } elseif \\($c -match \"APPLICATION FAILED|BUILD FAILURE\"\\) { break } } }; if \\($started\\) { \"STARTED\" } else { \"FAILED\" })",
       "Bash(curl -s -w '\\\\nHTTP:%{http_code}' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJleHAiOjk5OTk5OTk5OTl9.fakeSignature' -H 'Content-Type: application/json' -d '{\"title\":\"test doc\",\"contentRaw\":\"some text content\",\"type\":\"NOTE\",\"tagIds\":[]}' http://localhost:8080/api/v1/knowledge/documents)",
       "Bash(git *)",
-      "Bash(./mvnw -q compile)"
+      "Bash(./mvnw -q compile)",
+      "Bash(xargs grep -l \"knowledge_chunks\")"
     ]
   }
 }
