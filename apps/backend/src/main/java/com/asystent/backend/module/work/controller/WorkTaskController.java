@@ -2,6 +2,8 @@ package com.asystent.backend.module.work.controller;
 
 import com.asystent.backend.common.ApiResponse;
 import com.asystent.backend.module.work.dto.WorkTaskDto;
+import com.asystent.backend.module.work.dto.WorkTaskNoteDto;
+import com.asystent.backend.module.work.dto.WorkTaskNoteRequest;
 import com.asystent.backend.module.work.dto.WorkTaskRequest;
 import com.asystent.backend.module.work.service.WorkTaskService;
 import jakarta.validation.Valid;
@@ -64,6 +66,22 @@ public class WorkTaskController {
             @PathVariable UUID id) {
         taskService.deleteTask(getUserId(auth), id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/notes")
+    public ResponseEntity<ApiResponse<List<WorkTaskNoteDto>>> getNotes(
+            Authentication auth,
+            @PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.ok(taskService.getNotes(getUserId(auth), id)));
+    }
+
+    @PostMapping("/{id}/notes")
+    public ResponseEntity<ApiResponse<WorkTaskNoteDto>> addNote(
+            Authentication auth,
+            @PathVariable UUID id,
+            @Valid @RequestBody WorkTaskNoteRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok(taskService.addNote(getUserId(auth), id, request)));
     }
 
     private UUID getUserId(Authentication auth) {

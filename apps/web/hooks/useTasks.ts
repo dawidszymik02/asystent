@@ -1,7 +1,7 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import type { WorkTask, CreateTaskPayload } from '@/types/work'
+import type { WorkTask, WorkTaskNote, CreateTaskPayload } from '@/types/work'
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? ''
 
@@ -95,4 +95,27 @@ async function deleteTask(id: string): Promise<void> {
   if (!res.ok) throw new Error(`Błąd usuwania zadania: ${res.status}`)
 }
 
-export { fetchTasks, fetchTask, createTask, updateTask, deleteTask }
+async function fetchTaskNotes(taskId: string): Promise<WorkTaskNote[]> {
+  const headers = await getAuthHeader()
+  const res = await fetch(`${API}/work/tasks/${taskId}/notes`, { headers })
+  if (!res.ok) throw new Error(`Błąd pobierania notatek: ${res.status}`)
+  const json = await res.json()
+  return (json.data ?? json) as WorkTaskNote[]
+}
+
+async function createTaskNote(taskId: string, content: string): Promise<WorkTaskNote> {
+  const headers = await getAuthHeader()
+  const res = await fetch(`${API}/work/tasks/${taskId}/notes`, {
+    method: 'POST',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content }),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.message ?? `Błąd dodawania notatki: ${res.status}`)
+  }
+  const json = await res.json()
+  return (json.data ?? json) as WorkTaskNote
+}
+
+export { fetchTasks, fetchTask, createTask, updateTask, deleteTask, fetchTaskNotes, createTaskNote }

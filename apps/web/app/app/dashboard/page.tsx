@@ -1,15 +1,21 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { Pencil, Trash2 } from 'lucide-react'
 import {
   fetchNote,
   saveNote,
-  fetchTodayTasks,
   fetchTodayEvents,
   type DashboardNote,
   type CalendarEvent,
-  type MobileTask,
 } from '@/hooks/useDashboard'
+import {
+  fetchTasks,
+  completeTask,
+  deleteTask,
+  type MobileTask,
+} from '@/hooks/useCalendar'
+import TaskModal from '@/components/calendar/TaskModal'
 
 function formatTime(iso: string): string {
   const d = new Date(iso)
@@ -46,16 +52,28 @@ function todayShort(): string {
 }
 
 export default function DashboardPage() {
+  const today = new Date().toISOString().slice(0, 10)
+
   const [note, setNote] = useState<DashboardNote>({ id: '', content: '', updatedAt: '' })
   const [noteText, setNoteText] = useState('')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [savedAt, setSavedAt] = useState<string>('')
   const [tasks, setTasks] = useState<MobileTask[]>([])
   const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [showTaskModal, setShowTaskModal] = useState(false)
+  const [editingTask, setEditingTask] = useState<MobileTask | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  async function loadTasks() {
+    try {
+      setTasks(await fetchTasks(today))
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   useEffect(() => {
-    Promise.all([fetchNote(), fetchTodayTasks(), fetchTodayEvents()])
+    Promise.all([fetchNote(), fetchTasks(today), fetchTodayEvents()])
       .then(([n, t, e]) => {
         setNote(n)
         setNoteText(n.content)
@@ -63,7 +81,7 @@ export default function DashboardPage() {
         setEvents(e)
       })
       .catch(console.error)
-  }, [])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (noteText === note.content) return
@@ -83,6 +101,40 @@ export default function DashboardPage() {
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
   }, [noteText]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleCompleteTask(id: string) {
+    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)))
+    try {
+      await completeTask(id)
+      await loadTasks()
+    } catch (e) {
+      console.error(e)
+      await loadTasks()
+    }
+  }
+
+  async function handleDeleteTask(id: string) {
+    if (!confirm('Usunąć zadanie?')) return
+    setTasks((prev) => prev.filter((t) => t.id !== id))
+    try {
+      await deleteTask(id)
+    } catch (e) {
+      console.error(e)
+      await loadTasks()
+    }
+  }
+
+  const btnBase: React.CSSProperties = {
+    border: 'none',
+    background: 'transparent',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 4,
+    borderRadius: 6,
+    color: 'var(--text-muted)',
+  }
 
   return (
     <div style={{ background: 'var(--bg-page)', minHeight: '100%' }}>
@@ -133,6 +185,23 @@ export default function DashboardPage() {
               {tasks.length > 0 && (
                 <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{tasks.length}</span>
               )}
+              <button
+                style={{
+                  marginLeft: 'auto',
+                  fontSize: 12,
+                  color: 'var(--accent)',
+                  border: 'none',
+                  background: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 500,
+                }}
+                onClick={() => {
+                  setEditingTask(null)
+                  setShowTaskModal(true)
+                }}
+              >
+                + zadanie
+              </button>
             </div>
 
             {tasks.length === 0 ? (
@@ -147,33 +216,92 @@ export default function DashboardPage() {
                     borderRadius: 10,
                     padding: '10px 14px',
                     marginBottom: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                  }}
+                  onMouseEnter={(e) => {
+                    const btns = (e.currentTarget as HTMLDivElement).querySelector<HTMLDivElement>(
+                      '.task-actions',
+                    )
+                    if (btns) btns.style.opacity = '1'
+                  }}
+                  onMouseLeave={(e) => {
+                    const btns = (e.currentTarget as HTMLDivElement).querySelector<HTMLDivElement>(
+                      '.task-actions',
+                    )
+                    if (btns) btns.style.opacity = '0'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span
-                      style={{
-                        flex: 1,
-                        fontSize: 13,
-                        fontWeight: 500,
-                        color: 'var(--text-primary)',
-                        textDecoration: task.completed ? 'line-through' : 'none',
+                  {/* Checkbox */}
+                  <div
+                    onClick={() => handleCompleteTask(task.id)}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 4,
+                      flexShrink: 0,
+                      cursor: 'pointer',
+                      border: task.completed
+                        ? '2px solid var(--accent)'
+                        : '2px solid var(--border)',
+                      background: task.completed ? 'var(--accent)' : '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#fff',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      transition: 'background 0.15s, border-color 0.15s',
+                    }}
+                  >
+                    {task.completed && '✓'}
+                  </div>
+
+                  {/* Tytuł */}
+                  <span
+                    style={{
+                      flex: 1,
+                      fontSize: 13,
+                      fontWeight: 500,
+                      color: task.completed ? 'var(--text-muted)' : 'var(--text-primary)',
+                      textDecoration: task.completed ? 'line-through' : 'none',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {task.title}
+                  </span>
+
+                  {/* Akcje (widoczne po hover) */}
+                  <div
+                    className="task-actions"
+                    style={{
+                      display: 'flex',
+                      gap: 2,
+                      opacity: 0,
+                      transition: 'opacity 0.15s',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <button
+                      style={btnBase}
+                      title="Edytuj"
+                      onClick={() => {
+                        setEditingTask(task)
+                        setShowTaskModal(true)
                       }}
                     >
-                      {task.title}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 11,
-                        fontWeight: 500,
-                        color: task.completed ? '#16a34a' : '#9a3412',
-                        background: task.completed ? '#dcfce7' : '#ffedd5',
-                        borderRadius: 4,
-                        padding: '2px 7px',
-                        whiteSpace: 'nowrap',
-                      }}
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      style={{ ...btnBase, color: '#dc2626' }}
+                      title="Usuń"
+                      onClick={() => handleDeleteTask(task.id)}
                     >
-                      {task.completed ? 'Zrobione' : 'Do zrobienia'}
-                    </span>
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
               ))
@@ -259,8 +387,8 @@ export default function DashboardPage() {
                 {saveStatus === 'saving'
                   ? 'Zapisywanie...'
                   : saveStatus === 'saved'
-                  ? `Zapisano ${savedAt}`
-                  : ''}
+                    ? `Zapisano ${savedAt}`
+                    : ''}
               </span>
             </div>
 
@@ -297,6 +425,18 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Task Modal */}
+      <TaskModal
+        isOpen={showTaskModal}
+        onClose={() => {
+          setShowTaskModal(false)
+          setEditingTask(null)
+        }}
+        onSaved={loadTasks}
+        task={editingTask}
+        defaultDate={today}
+      />
     </div>
   )
 }

@@ -3,11 +3,18 @@
 import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { fetchTask, updateTask, deleteTask, TASK_TYPES, TASK_STATUSES } from '@/hooks/useTasks'
+import { Pencil } from 'lucide-react'
+import { fetchTask, updateTask, deleteTask, fetchTaskNotes, createTaskNote, TASK_TYPES, TASK_STATUSES } from '@/hooks/useTasks'
 import { fetchPrograms } from '@/hooks/useTickets'
-import type { WorkTask, WorkProgram } from '@/types/work'
+import type { WorkTask, WorkProgram, WorkTaskNote } from '@/types/work'
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
+
+function formatNoteDate(iso: string): string {
+  const date = new Date(iso)
+  const pad = (n: number) => n.toString().padStart(2, '0')
+  return `${pad(date.getDate())}.${pad(date.getMonth() + 1)}.${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
 
 function toDateInputValue(isoString?: string): string {
   if (!isoString) return ''
@@ -114,20 +121,28 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
 
   const [task, setTask] = useState<WorkTask | null>(null)
   const [programs, setPrograms] = useState<WorkProgram[]>([])
+  const [notes, setNotes] = useState<WorkTaskNote[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [notFound, setNotFound] = useState(false)
-  const [flash, setFlash] = useState<'status' | 'type' | 'dueDate' | null>(null)
+  const [flash, setFlash] = useState<'status' | 'type' | 'dueDate' | 'description' | null>(null)
   const [dueDateInput, setDueDateInput] = useState('')
+  const [descriptionDraft, setDescriptionDraft] = useState('')
+  const [editingDescription, setEditingDescription] = useState(false)
+  const [noteText, setNoteText] = useState('')
+  const [addingNote, setAddingNote] = useState(false)
+  const [noteError, setNoteError] = useState('')
 
   useEffect(() => {
     async function load() {
       setLoading(true)
       try {
-        const [t, p] = await Promise.all([fetchTask(id), fetchPrograms()])
+        const [t, p, n] = await Promise.all([fetchTask(id), fetchPrograms(), fetchTaskNotes(id)])
         setTask(t)
         setDueDateInput(toDateInputValue(t.dueDate))
+        setDescriptionDraft(t.description ?? '')
         setPrograms(p)
+        setNotes(n)
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : 'Błąd ładowania'
         if (msg === '404' || msg.toLowerCase().includes('not found')) {
@@ -194,6 +209,35 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
       setTimeout(() => setFlash(null), 700)
     } catch {
       alert('Nie udało się zapisać terminu')
+    }
+  }
+
+  const handleDescriptionSave = async () => {
+    if (!task) return
+    try {
+      const updated = await updateTask(task.id, { description: descriptionDraft.trim() })
+      setTask(updated)
+      setEditingDescription(false)
+      setFlash('description')
+      setTimeout(() => setFlash(null), 700)
+    } catch {
+      alert('Nie udało się zapisać opisu')
+    }
+  }
+
+  async function handleAddNote() {
+    if (!task || !noteText.trim() || addingNote) return
+    setAddingNote(true)
+    setNoteError('')
+    try {
+      await createTaskNote(task.id, noteText.trim())
+      const updated = await fetchTaskNotes(task.id)
+      setNotes(updated)
+      setNoteText('')
+    } catch (err: unknown) {
+      setNoteError(err instanceof Error ? err.message : 'Błąd dodawania notatki')
+    } finally {
+      setAddingNote(false)
     }
   }
 
@@ -375,19 +419,159 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {/* Description */}
-      {task.description && (
-        <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 20, marginTop: 16 }}>
+      <div style={{
+        background: '#FFFFFF',
+        border: flash === 'description' ? '1px solid #10B981' : '1px solid #E5E7EB',
+        borderRadius: 12,
+        padding: 20,
+        marginTop: 16,
+        transition: 'border-color 0.3s',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <p style={{
             fontSize: 13, fontWeight: 500, color: 'var(--text-muted)',
-            textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 12px 0',
+            textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0,
           }}>
             Opis
           </p>
-          <p style={{ fontSize: 14, lineHeight: 1.7, color: '#111827', whiteSpace: 'pre-wrap', margin: 0 }}>
-            {task.description}
-          </p>
+          {!editingDescription && (
+            <button
+              onClick={() => setEditingDescription(true)}
+              title="Edytuj opis"
+              style={{
+                border: 'none', background: 'transparent', cursor: 'pointer',
+                color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
+                padding: 4, borderRadius: 6,
+              }}
+            >
+              <Pencil size={14} />
+            </button>
+          )}
         </div>
-      )}
+
+        {editingDescription ? (
+          <div>
+            <textarea
+              value={descriptionDraft}
+              onChange={(e) => setDescriptionDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleDescriptionSave()
+              }}
+              autoFocus
+              rows={5}
+              style={{
+                width: '100%', border: '1px solid #E5E7EB', borderRadius: 8,
+                padding: '8px 10px', fontSize: 14, resize: 'vertical',
+                outline: 'none', background: '#FFFFFF', color: '#111827',
+                boxSizing: 'border-box', lineHeight: 1.6, fontFamily: 'inherit',
+                transition: 'border-color 150ms',
+              }}
+              onFocus={(e) => { e.target.style.borderColor = '#10B981'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1)' }}
+              onBlur={(e) => { e.target.style.borderColor = '#E5E7EB'; e.target.style.boxShadow = 'none' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+              <button
+                onClick={() => { setDescriptionDraft(task.description ?? ''); setEditingDescription(false) }}
+                style={{
+                  border: '1px solid #E5E7EB', background: '#FFFFFF', color: '#6B7280',
+                  borderRadius: 8, padding: '6px 14px', fontSize: 13, cursor: 'pointer',
+                }}
+              >
+                Anuluj
+              </button>
+              <button
+                onClick={handleDescriptionSave}
+                style={{
+                  border: 'none', background: '#10B981', color: '#FFFFFF',
+                  borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                }}
+              >
+                Zapisz
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div onClick={() => setEditingDescription(true)} style={{ cursor: 'text' }}>
+            {task.description ? (
+              <p style={{ fontSize: 14, lineHeight: 1.7, color: '#111827', whiteSpace: 'pre-wrap', margin: 0 }}>
+                {task.description}
+              </p>
+            ) : (
+              <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic' }}>
+                Brak opisu — kliknij, aby dodać
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Notes — Dziennik pracy */}
+      <div style={{ marginTop: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <span style={{ fontSize: 16, fontWeight: 600, color: '#111827' }}>Dziennik pracy</span>
+          <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>({notes.length})</span>
+        </div>
+
+        <div>
+          <textarea
+            value={noteText}
+            onChange={(e) => setNoteText(e.target.value)}
+            rows={3}
+            placeholder="Dodaj notatkę do zadania..."
+            onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleAddNote() }}
+            style={{
+              width: '100%', border: '1px solid #E5E7EB', borderRadius: 10,
+              padding: '10px 12px', fontSize: 14, resize: 'vertical',
+              outline: 'none', background: '#FFFFFF', color: '#111827',
+              boxSizing: 'border-box', transition: 'border-color 150ms',
+            }}
+            onFocus={(e) => { e.target.style.borderColor = '#10B981'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1)' }}
+            onBlur={(e) => { e.target.style.borderColor = '#E5E7EB'; e.target.style.boxShadow = 'none' }}
+          />
+          {noteError && <p style={{ fontSize: 13, color: '#EF4444', margin: '4px 0 0 0' }}>{noteError}</p>}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+            <button
+              onClick={handleAddNote}
+              disabled={addingNote || !noteText.trim()}
+              style={{
+                background: addingNote || !noteText.trim() ? '#6EE7B7' : '#10B981',
+                color: '#FFFFFF', border: 'none', borderRadius: 8,
+                padding: '7px 16px', fontSize: 13,
+                cursor: addingNote || !noteText.trim() ? 'not-allowed' : 'pointer',
+              }}
+            >
+              {addingNote ? 'Dodawanie...' : 'Dodaj notatkę'}
+            </button>
+          </div>
+        </div>
+
+        {notes.length === 0 ? (
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 16 }}>
+            Brak notatek — dodaj pierwszą
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
+            {notes.map((note) => (
+              <div
+                key={note.id}
+                style={{
+                  background: '#FAFAFA',
+                  borderLeft: '3px solid #ECFDF5',
+                  borderRadius: '0 10px 10px 0',
+                  padding: '12px 16px',
+                }}
+              >
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'right', marginBottom: 6 }}>
+                  {formatNoteDate(note.createdAt)}
+                </div>
+                <div style={{ fontSize: 14, lineHeight: 1.6, color: '#111827', whiteSpace: 'pre-wrap' }}>
+                  {note.content}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

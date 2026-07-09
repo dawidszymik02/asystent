@@ -3,8 +3,12 @@ package com.asystent.backend.module.work.service;
 import com.asystent.backend.exception.ResourceNotFoundException;
 import com.asystent.backend.module.work.WorkMapper;
 import com.asystent.backend.module.work.dto.WorkTaskDto;
+import com.asystent.backend.module.work.dto.WorkTaskNoteDto;
+import com.asystent.backend.module.work.dto.WorkTaskNoteRequest;
 import com.asystent.backend.module.work.dto.WorkTaskRequest;
 import com.asystent.backend.module.work.entity.WorkTask;
+import com.asystent.backend.module.work.entity.WorkTaskNote;
+import com.asystent.backend.module.work.repository.WorkTaskNoteRepository;
 import com.asystent.backend.module.work.repository.WorkTaskRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,9 +22,12 @@ import java.util.UUID;
 public class WorkTaskService {
 
     private final WorkTaskRepository taskRepository;
+    private final WorkTaskNoteRepository noteRepository;
 
-    public WorkTaskService(WorkTaskRepository taskRepository) {
+    public WorkTaskService(WorkTaskRepository taskRepository,
+                           WorkTaskNoteRepository noteRepository) {
         this.taskRepository = taskRepository;
+        this.noteRepository = noteRepository;
     }
 
     public List<WorkTaskDto> getTasks(UUID userId) {
@@ -74,6 +81,27 @@ public class WorkTaskService {
     @Transactional
     public void deleteTask(UUID userId, UUID id) {
         taskRepository.delete(findOwnedTask(userId, id));
+    }
+
+    @Transactional
+    public WorkTaskNoteDto addNote(UUID userId, UUID taskId, WorkTaskNoteRequest req) {
+        findOwnedTask(userId, taskId);
+
+        WorkTaskNote note = new WorkTaskNote();
+        note.setTaskId(taskId);
+        note.setUserId(userId);
+        note.setContent(req.content());
+
+        return WorkMapper.toDto(noteRepository.save(note));
+    }
+
+    public List<WorkTaskNoteDto> getNotes(UUID userId, UUID taskId) {
+        findOwnedTask(userId, taskId);
+
+        return noteRepository.findAllByTaskIdOrderByCreatedAtAsc(taskId)
+                .stream()
+                .map(WorkMapper::toDto)
+                .toList();
     }
 
     private WorkTask findOwnedTask(UUID userId, UUID id) {

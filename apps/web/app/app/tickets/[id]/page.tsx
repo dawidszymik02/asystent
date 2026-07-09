@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Pencil } from 'lucide-react'
 import {
   fetchTicket, updateTicket, deleteTicket,
   fetchNotes, addNote, fetchPrograms, fetchStatuses,
@@ -134,7 +135,9 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
   const [addingNote, setAddingNote] = useState(false)
   const [noteError, setNoteError] = useState('')
 
-  const [flash, setFlash] = useState<'status' | 'priority' | null>(null)
+  const [flash, setFlash] = useState<'status' | 'priority' | 'description' | null>(null)
+  const [descriptionDraft, setDescriptionDraft] = useState('')
+  const [editingDescription, setEditingDescription] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -147,6 +150,7 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
           fetchStatuses(),
         ])
         setTicket(t)
+        setDescriptionDraft(t.description ?? '')
         setNotes(n)
         setPrograms(p)
         setStatuses(s)
@@ -187,6 +191,19 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
       setTimeout(() => setFlash(null), 700)
     } catch {
       alert('Nie udało się zapisać priorytetu')
+    }
+  }
+
+  const handleDescriptionSave = async () => {
+    if (!ticket) return
+    try {
+      const updated = await updateTicket(ticket.id, { description: descriptionDraft.trim() })
+      setTicket(updated)
+      setEditingDescription(false)
+      setFlash('description')
+      setTimeout(() => setFlash(null), 700)
+    } catch {
+      alert('Nie udało się zapisać opisu')
     }
   }
 
@@ -386,19 +403,91 @@ export default function TicketDetailPage({ params }: { params: Promise<{ id: str
       </div>
 
       {/* Description */}
-      {ticket.description && (
-        <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 12, padding: 20, marginTop: 16 }}>
+      <div style={{
+        background: '#FFFFFF',
+        border: flash === 'description' ? '1px solid #10B981' : '1px solid #E5E7EB',
+        borderRadius: 12,
+        padding: 20,
+        marginTop: 16,
+        transition: 'border-color 0.3s',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <p style={{
             fontSize: 13, fontWeight: 500, color: 'var(--text-muted)',
-            textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 12px 0',
+            textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0,
           }}>
             Opis
           </p>
-          <p style={{ fontSize: 14, lineHeight: 1.7, color: '#111827', whiteSpace: 'pre-wrap', margin: 0 }}>
-            {ticket.description}
-          </p>
+          {!editingDescription && (
+            <button
+              onClick={() => setEditingDescription(true)}
+              title="Edytuj opis"
+              style={{
+                border: 'none', background: 'transparent', cursor: 'pointer',
+                color: 'var(--text-muted)', display: 'flex', alignItems: 'center',
+                padding: 4, borderRadius: 6,
+              }}
+            >
+              <Pencil size={14} />
+            </button>
+          )}
         </div>
-      )}
+
+        {editingDescription ? (
+          <div>
+            <textarea
+              value={descriptionDraft}
+              onChange={(e) => setDescriptionDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleDescriptionSave()
+              }}
+              autoFocus
+              rows={5}
+              style={{
+                width: '100%', border: '1px solid #E5E7EB', borderRadius: 8,
+                padding: '8px 10px', fontSize: 14, resize: 'vertical',
+                outline: 'none', background: '#FFFFFF', color: '#111827',
+                boxSizing: 'border-box', lineHeight: 1.6, fontFamily: 'inherit',
+                transition: 'border-color 150ms',
+              }}
+              onFocus={(e) => { e.target.style.borderColor = '#10B981'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1)' }}
+              onBlur={(e) => { e.target.style.borderColor = '#E5E7EB'; e.target.style.boxShadow = 'none' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+              <button
+                onClick={() => { setDescriptionDraft(ticket.description ?? ''); setEditingDescription(false) }}
+                style={{
+                  border: '1px solid #E5E7EB', background: '#FFFFFF', color: '#6B7280',
+                  borderRadius: 8, padding: '6px 14px', fontSize: 13, cursor: 'pointer',
+                }}
+              >
+                Anuluj
+              </button>
+              <button
+                onClick={handleDescriptionSave}
+                style={{
+                  border: 'none', background: '#10B981', color: '#FFFFFF',
+                  borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                }}
+              >
+                Zapisz
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div onClick={() => setEditingDescription(true)} style={{ cursor: 'text' }}>
+            {ticket.description ? (
+              <p style={{ fontSize: 14, lineHeight: 1.7, color: '#111827', whiteSpace: 'pre-wrap', margin: 0 }}>
+                {ticket.description}
+              </p>
+            ) : (
+              <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic' }}>
+                Brak opisu — kliknij, aby dodać
+              </p>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Notes */}
       <div style={{ marginTop: 24 }}>

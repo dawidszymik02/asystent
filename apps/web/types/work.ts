@@ -41,6 +41,14 @@ export interface WorkTicketNote {
   createdAt: string
 }
 
+export interface WorkTaskNote {
+  id: string
+  taskId: string
+  userId: string
+  content: string
+  createdAt: string
+}
+
 export interface WorkTicketStatus {
   id: string
   key: string

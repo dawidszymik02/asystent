@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,10 +20,17 @@ public class TaskService {
     private final TaskRepository taskRepository;
 
     public List<TaskResponse> getTasksForDate(UUID userId, LocalDate date) {
-        return taskRepository.findByUserIdAndDateOrderByCompletedAscPositionAsc(userId, date)
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+        List<Task> tasks = new ArrayList<>(
+                taskRepository.findByUserIdAndDateOrderByCompletedAscPositionAsc(userId, date));
+
+        // Fallback: if querying today, also surface past incomplete tasks in case scheduler missed a run
+        if (date.equals(LocalDate.now())) {
+            List<Task> overdue = taskRepository
+                    .findByUserIdAndCompletedFalseAndDateBeforeOrderByDateAscPositionAsc(userId, date);
+            tasks.addAll(overdue);
+        }
+
+        return tasks.stream().map(this::mapToResponse).toList();
     }
 
     @Transactional
@@ -75,6 +83,17 @@ public class TaskService {
         task.setCompleted(nowCompleted);
         task.setCompletedAt(nowCompleted ? OffsetDateTime.now() : null);
         return mapToResponse(taskRepository.save(task));
+    }
+
+    @Transactional
+    public int rollForwardOverdueTasks() {
+        LocalDate today = LocalDate.now();
+        List<Task> overdue = taskRepository.findByCompletedFalseAndDateBefore(today);
+        overdue.forEach(t -> t.setDate(today));
+        if (!overdue.isEmpty()) {
+            taskRepository.saveAll(overdue);
+        }
+        return overdue.size();
     }
 
     private Task findOwnedTask(UUID userId, UUID taskId) {

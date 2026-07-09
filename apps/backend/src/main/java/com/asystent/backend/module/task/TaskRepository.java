@@ -16,4 +16,10 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     @Query("SELECT COALESCE(MAX(t.position), -1) FROM Task t WHERE t.userId = :userId AND t.date = :date")
     int findMaxPositionByUserIdAndDate(@Param("userId") UUID userId, @Param("date") LocalDate date);
+
+    // For scheduler: all incomplete tasks from past dates across all users
+    List<Task> findByCompletedFalseAndDateBefore(LocalDate date);
+
+    // For GET fallback: user's incomplete past tasks (in case scheduler missed a run)
+    List<Task> findByUserIdAndCompletedFalseAndDateBeforeOrderByDateAscPositionAsc(UUID userId, LocalDate date);
 }

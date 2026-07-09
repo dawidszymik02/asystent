@@ -70,6 +70,16 @@ public final class WorkMapper {
         );
     }
 
+    public static WorkTaskNoteDto toDto(WorkTaskNote note) {
+        return new WorkTaskNoteDto(
+                note.getId(),
+                note.getTaskId(),
+                note.getUserId(),
+                note.getContent(),
+                note.getCreatedAt()
+        );
+    }
+
     public static WorkTaskDto toDto(WorkTask task) {
         return new WorkTaskDto(
                 task.getId(),
