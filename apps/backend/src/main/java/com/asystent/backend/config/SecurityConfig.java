@@ -39,6 +39,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/calendar/**").authenticated()
                 .requestMatchers("/api/v1/work/**").authenticated()
                 .requestMatchers("/api/v1/knowledge/**").authenticated()
+                .requestMatchers("/api/v1/agent/**").authenticated()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
