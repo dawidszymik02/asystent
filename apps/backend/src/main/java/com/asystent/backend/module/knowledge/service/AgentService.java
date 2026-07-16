@@ -10,6 +10,7 @@ import com.asystent.backend.module.knowledge.dto.SearchResponse;
 import com.asystent.backend.module.knowledge.dto.SearchResultItem;
 import com.asystent.backend.module.knowledge.dto.TaskSummary;
 import com.asystent.backend.module.knowledge.dto.TicketSummary;
+import com.asystent.backend.module.knowledge.dto.WorkTaskSummary;
 import com.asystent.backend.module.knowledge.entity.AgentConversation;
 import com.asystent.backend.module.knowledge.entity.AgentMessage;
 import com.asystent.backend.module.knowledge.repository.AgentConversationRepository;
@@ -72,6 +73,9 @@ public class AgentService {
             ### Otwarte zgłoszenia
             %s
 
+            ### Zadania wdrożeniowe (Praca)
+            %s
+
             Odpowiadaj na podstawie powyższych danych. Jeśli informacja nie jest
             dostępna w kontekście, powiedz o tym wprost.
             """;
@@ -126,13 +130,15 @@ public class AgentService {
         List<TaskSummary> yesterdayTasks = liveDataService.getYesterdayTasks(userId);
         List<EventSummary> yesterdayEvents = liveDataService.getYesterdayEvents(userId);
         List<TicketSummary> openTickets = liveDataService.getOpenTickets(userId);
-        log.info("Live data: {} task(s), {} event(s), {} ticket(s)", todayTasks.size(), todayEvents.size(), openTickets.size());
+        List<WorkTaskSummary> openWorkTasks = liveDataService.getOpenWorkTasks(userId);
+        log.info("Live data: {} task(s), {} event(s), {} ticket(s), {} work task(s)",
+                todayTasks.size(), todayEvents.size(), openTickets.size(), openWorkTasks.size());
 
         String systemPrompt = buildSystemPrompt(
                 fragments, todayTasks, todayEvents,
                 tomorrowTasks, tomorrowEvents,
                 yesterdayTasks, yesterdayEvents,
-                openTickets);
+                openTickets, openWorkTasks);
 
         String assistantReply = callClaude(systemPrompt, history, req.message());
 
@@ -190,7 +196,8 @@ public class AgentService {
             List<EventSummary> tomorrowEvents,
             List<TaskSummary> yesterdayTasks,
             List<EventSummary> yesterdayEvents,
-            List<TicketSummary> openTickets) {
+            List<TicketSummary> openTickets,
+            List<WorkTaskSummary> openWorkTasks) {
 
         String fragmentsText = fragments.isEmpty()
                 ? "Brak dopasowanych dokumentów"
@@ -210,7 +217,17 @@ public class AgentService {
                 eventsText(tomorrowEvents, "Brak wydarzeń na jutro"),
                 tasksText(yesterdayTasks, "Brak zadań na wczoraj"),
                 eventsText(yesterdayEvents, "Brak wydarzeń na wczoraj"),
-                ticketsText);
+                ticketsText,
+                workTasksText(openWorkTasks));
+    }
+
+    private String workTasksText(List<WorkTaskSummary> workTasks) {
+        return workTasks.isEmpty()
+                ? "Brak otwartych zadań wdrożeniowych"
+                : workTasks.stream().map(t -> {
+                    String base = "- " + t.title() + " (klient: " + t.clientName() + ", status: " + t.status() + ")";
+                    return t.description() == null ? base : base + ": " + t.description();
+                }).collect(Collectors.joining("\n"));
     }
 
     private String tasksText(List<TaskSummary> tasks, String emptyText) {

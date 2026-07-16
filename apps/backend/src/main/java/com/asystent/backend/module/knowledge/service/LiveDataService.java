@@ -5,6 +5,7 @@ import com.asystent.backend.module.knowledge.dto.EventSummary;
 import com.asystent.backend.module.knowledge.dto.TaskSummary;
 import com.asystent.backend.module.knowledge.dto.TicketDetails;
 import com.asystent.backend.module.knowledge.dto.TicketSummary;
+import com.asystent.backend.module.knowledge.dto.WorkTaskSummary;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Service;
@@ -126,6 +127,31 @@ public class LiveDataService {
                         (UUID) rs.getObject("id"),
                         rs.getString("title"),
                         rs.getObject("date", LocalDate.class).atStartOfDay()
+                ))
+                .list();
+    }
+
+    public List<WorkTaskSummary> getOpenWorkTasks(UUID userId) {
+        String sql = """
+                SELECT wt.id, wt.title, wt.description, wt.client_name,
+                       wp.name AS program_name, wt.status, wt.due_date
+                FROM work_tasks wt
+                LEFT JOIN work_programs wp ON wp.id = wt.program_id
+                WHERE wt.user_id = :userId AND wt.status NOT IN ('done','cancelled')
+                ORDER BY wt.due_date ASC NULLS LAST
+                LIMIT 20
+                """;
+
+        return jdbcClient.sql(sql)
+                .param("userId", userId)
+                .query((rs, rowNum) -> new WorkTaskSummary(
+                        (UUID) rs.getObject("id"),
+                        rs.getString("title"),
+                        rs.getString("description"),
+                        rs.getString("client_name"),
+                        rs.getString("program_name"),
+                        rs.getString("status"),
+                        toLocalDateTime(rs.getTimestamp("due_date"))
                 ))
                 .list();
     }
