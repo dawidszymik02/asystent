@@ -240,6 +240,18 @@ public class LiveDataService {
                 .list();
     }
 
+    public List<String> getWorkTaskNotes(UUID userId, UUID taskId) {
+        return jdbcClient.sql("""
+                        SELECT content FROM work_task_notes
+                        WHERE task_id = :taskId AND user_id = :userId
+                        ORDER BY created_at ASC
+                        """)
+                .param("taskId", taskId)
+                .param("userId", userId)
+                .query((rs, rowNum) -> rs.getString("content"))
+                .list();
+    }
+
     public TicketDetails getTicketDetails(UUID userId, UUID ticketId) {
         String sql = """
                 SELECT wt.id, wt.title, wt.description, wt.client_name, wp.name AS program_name,

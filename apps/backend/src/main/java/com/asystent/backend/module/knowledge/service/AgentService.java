@@ -72,6 +72,10 @@ public class AgentService {
             get_calendar_events / get_daily_tasks / get_work_tasks z odpowiednim
             zakresem dat wyliczonym względem dzisiejszej daty.
 
+            Jeśli użytkownik pyta o przebieg/historię/notatki konkretnego zadania
+            wdrożeniowego, najpierw znajdź je przez get_work_tasks, a potem użyj
+            get_task_notes z jego id.
+
             Odpowiadaj na podstawie powyższych danych. Jeśli informacja nie jest
             dostępna w kontekście, powiedz o tym wprost.
             """;
@@ -87,8 +91,14 @@ public class AgentService {
                     dateRangeSchema(false)),
             tool("get_work_tasks",
                     "Zwraca zadania wdrożeniowe (z opisem, klientem, programem) w podanym zakresie dat due_date, "
-                            + "opcjonalnie filtrowane po statusie.",
-                    dateRangeSchema(true))
+                            + "opcjonalnie filtrowane po statusie. Zwraca też id każdego zadania — użyj go w "
+                            + "get_task_notes, żeby dociągnąć dziennik pracy dla konkretnego zadania.",
+                    dateRangeSchema(true)),
+            tool("get_task_notes",
+                    "Zwraca dziennik pracy (chronologiczne notatki) dla konkretnego zadania wdrożeniowego. "
+                            + "Użyj po tym, jak get_work_tasks zwróci listę zadań i potrzebujesz szczegółów "
+                            + "przebiegu realizacji konkretnego zadania.",
+                    taskIdSchema())
     );
 
     private static Map<String, Object> tool(String name, String description, Map<String, Object> inputSchema) {
@@ -124,6 +134,21 @@ public class AgentService {
         schema.put("type", "object");
         schema.put("properties", properties);
         schema.put("required", List.of("from_date", "to_date"));
+        return schema;
+    }
+
+    private static Map<String, Object> taskIdSchema() {
+        Map<String, Object> taskId = new LinkedHashMap<>();
+        taskId.put("type", "string");
+        taskId.put("description", "UUID zadania wdrożeniowego (pole id zwrócone przez get_work_tasks)");
+
+        Map<String, Object> properties = new LinkedHashMap<>();
+        properties.put("task_id", taskId);
+
+        Map<String, Object> schema = new LinkedHashMap<>();
+        schema.put("type", "object");
+        schema.put("properties", properties);
+        schema.put("required", List.of("task_id"));
         return schema;
     }
 
@@ -380,24 +405,33 @@ public class AgentService {
         return text.toString();
     }
 
+    private LocalDate parseDate(JsonNode input, String field) {
+        return LocalDate.parse(input.get(field).asText());
+    }
+
     private String executeTool(UUID userId, String toolName, JsonNode input) {
         try {
-            LocalDate fromDate = LocalDate.parse(input.get("from_date").asText());
-            LocalDate toDate = LocalDate.parse(input.get("to_date").asText());
-
             Object results = switch (toolName) {
-                case "get_calendar_events" -> liveDataService.getEventsForRange(userId, fromDate, toDate);
-                case "get_daily_tasks" -> liveDataService.getTasksForRange(userId, fromDate, toDate);
+                case "get_calendar_events" -> liveDataService.getEventsForRange(
+                        userId, parseDate(input, "from_date"), parseDate(input, "to_date"));
+                case "get_daily_tasks" -> liveDataService.getTasksForRange(
+                        userId, parseDate(input, "from_date"), parseDate(input, "to_date"));
                 case "get_work_tasks" -> {
                     String status = input.hasNonNull("status") ? input.get("status").asText() : null;
-                    yield liveDataService.getWorkTasksForRange(userId, fromDate, toDate, status);
+                    yield liveDataService.getWorkTasksForRange(
+                            userId, parseDate(input, "from_date"), parseDate(input, "to_date"), status);
                 }
+                case "get_task_notes" -> liveDataService.getWorkTaskNotes(
+                        userId, UUID.fromString(input.get("task_id").asText()));
                 default -> throw new IllegalArgumentException("Unknown tool: " + toolName);
             };
 
             List<?> resultList = (List<?>) results;
             Map<String, Object> payload = new LinkedHashMap<>();
             payload.put("results", resultList);
+            if ("get_task_notes".equals(toolName) && resultList.isEmpty()) {
+                payload.put("note", "Brak wpisów w dzienniku dla tego zadania");
+            }
             if (resultList.size() >= 200) {
                 payload.put("truncated", true);
                 payload.put("note", "Wynik przycięty do 200 rekordów, doprecyzuj zakres");
