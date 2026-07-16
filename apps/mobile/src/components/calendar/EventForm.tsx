@@ -13,6 +13,7 @@ import {
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useColorScheme } from 'react-native';
 import { format, addHours } from 'date-fns';
+import { pl } from 'date-fns/locale';
 import { colors } from '../../theme/colors';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -243,7 +244,7 @@ export const EventForm: React.FC<EventFormProps> = ({ initialValues, onSubmit, s
             style={[styles.dateBtn, { backgroundColor: theme.surface, borderColor: theme.border }]}
             onPress={() => openPicker('startDate')}
           >
-            <Text style={{ color: theme.text }}>{format(startDate, 'd MMM yyyy')}</Text>
+            <Text style={{ color: theme.text }}>{format(startDate, 'd MMM yyyy', { locale: pl })}</Text>
           </TouchableOpacity>
           {!isAllDay && (
             <TouchableOpacity
@@ -288,7 +289,7 @@ export const EventForm: React.FC<EventFormProps> = ({ initialValues, onSubmit, s
                 style={[styles.dateBtn, { backgroundColor: theme.surface, borderColor: theme.border }]}
                 onPress={() => openPicker('endDate')}
               >
-                <Text style={{ color: theme.text }}>{format(endDate, 'd MMM yyyy')}</Text>
+                <Text style={{ color: theme.text }}>{format(endDate, 'd MMM yyyy', { locale: pl })}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.timeBtn, { backgroundColor: theme.surface, borderColor: theme.border }]}
@@ -389,7 +390,7 @@ export const EventForm: React.FC<EventFormProps> = ({ initialValues, onSubmit, s
               onPress={() => openPicker('recurrenceEndDate')}
             >
               <Text style={{ color: theme.text }}>
-                {recurrenceEndDate ? format(recurrenceEndDate, 'd MMM yyyy') : 'Nieokreślony koniec'}
+                {recurrenceEndDate ? format(recurrenceEndDate, 'd MMM yyyy', { locale: pl }) : 'Nieokreślony koniec'}
               </Text>
             </TouchableOpacity>
             {pickerField === 'recurrenceEndDate' && (
@@ -420,7 +421,7 @@ export const EventForm: React.FC<EventFormProps> = ({ initialValues, onSubmit, s
                 style={[styles.dateBtn, { backgroundColor: theme.surface, borderColor: theme.border }]}
                 onPress={() => openPicker('reminderDate')}
               >
-                <Text style={{ color: theme.text }}>{format(reminderDate, 'd MMM yyyy')}</Text>
+                <Text style={{ color: theme.text }}>{format(reminderDate, 'd MMM yyyy', { locale: pl })}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.timeBtn, { backgroundColor: theme.surface, borderColor: theme.border }]}

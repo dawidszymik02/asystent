@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { isToday, isTomorrow, format } from 'date-fns';
+import { pl } from 'date-fns/locale';
 import type { CalendarEvent } from '../store/calendarStore';
 
 const REMINDER_KEY_PREFIX = 'reminders:';
@@ -37,11 +38,11 @@ export const useNotifications = () => {
     const notificationId = await Notifications.scheduleNotificationAsync({
       content: {
         title: event.title,
-        body: isToday(reminderTime)
-            ? `Dziś o ${format(reminderTime, 'HH:mm')}`
-            : isTomorrow(reminderTime)
-            ? `Jutro o ${format(reminderTime, 'HH:mm')}`
-            : `${format(reminderTime, 'd MMM yyyy')} o ${format(reminderTime, 'HH:mm')}`,
+        body: isToday(startTime)
+            ? `Dziś o ${format(startTime, 'HH:mm')}`
+            : isTomorrow(startTime)
+            ? `Jutro o ${format(startTime, 'HH:mm')}`
+            : `${format(startTime, 'd MMM yyyy', { locale: pl })} o ${format(startTime, 'HH:mm')}`,
         data: { eventId: event.id },
       },
       trigger: {
