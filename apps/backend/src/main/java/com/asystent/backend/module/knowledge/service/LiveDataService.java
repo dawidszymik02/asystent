@@ -131,6 +131,90 @@ public class LiveDataService {
                 .list();
     }
 
+    public List<EventSummary> getEventsForRange(UUID userId, LocalDate from, LocalDate to) {
+        OffsetDateTime startOfRange = from.atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime();
+        OffsetDateTime endOfRange = to.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime();
+
+        String sql = """
+                SELECT id, title, start_time, end_time, description
+                FROM calendar_events
+                WHERE user_id = :userId
+                  AND is_cancelled = false
+                  AND start_time >= :startOfRange AND start_time < :endOfRange
+                ORDER BY start_time ASC
+                LIMIT 200
+                """;
+
+        return jdbcClient.sql(sql)
+                .param("userId", userId)
+                .param("startOfRange", startOfRange)
+                .param("endOfRange", endOfRange)
+                .query((rs, rowNum) -> new EventSummary(
+                        (UUID) rs.getObject("id"),
+                        rs.getString("title"),
+                        toLocalDateTime(rs.getTimestamp("start_time")),
+                        toLocalDateTime(rs.getTimestamp("end_time")),
+                        rs.getString("description")
+                ))
+                .list();
+    }
+
+    public List<TaskSummary> getTasksForRange(UUID userId, LocalDate from, LocalDate to) {
+        String sql = """
+                SELECT id, title, date
+                FROM tasks
+                WHERE user_id = :userId AND date BETWEEN :from AND :to
+                ORDER BY date ASC, position ASC
+                LIMIT 200
+                """;
+
+        return jdbcClient.sql(sql)
+                .param("userId", userId)
+                .param("from", from)
+                .param("to", to)
+                .query((rs, rowNum) -> new TaskSummary(
+                        (UUID) rs.getObject("id"),
+                        rs.getString("title"),
+                        rs.getObject("date", LocalDate.class).atStartOfDay()
+                ))
+                .list();
+    }
+
+    public List<WorkTaskSummary> getWorkTasksForRange(UUID userId, LocalDate from, LocalDate to, String status) {
+        boolean hasStatus = status != null && !status.isBlank();
+
+        String sql = """
+                SELECT wt.id, wt.title, wt.description, wt.client_name,
+                       wp.name AS program_name, wt.status, wt.due_date
+                FROM work_tasks wt
+                LEFT JOIN work_programs wp ON wp.id = wt.program_id
+                WHERE wt.user_id = :userId AND wt.due_date BETWEEN :from AND :to
+                """ + (hasStatus ? " AND wt.status = :status" : "") + """
+
+                ORDER BY wt.due_date ASC
+                LIMIT 200
+                """;
+
+        var spec = jdbcClient.sql(sql)
+                .param("userId", userId)
+                .param("from", from)
+                .param("to", to);
+        if (hasStatus) {
+            spec = spec.param("status", status);
+        }
+
+        return spec.query((rs, rowNum) -> new WorkTaskSummary(
+                        (UUID) rs.getObject("id"),
+                        rs.getString("title"),
+                        rs.getString("description"),
+                        rs.getString("client_name"),
+                        rs.getString("program_name"),
+                        rs.getString("status"),
+                        toLocalDateTime(rs.getTimestamp("due_date"))
+                ))
+                .list();
+    }
+
     public List<WorkTaskSummary> getOpenWorkTasks(UUID userId) {
         String sql = """
                 SELECT wt.id, wt.title, wt.description, wt.client_name,
