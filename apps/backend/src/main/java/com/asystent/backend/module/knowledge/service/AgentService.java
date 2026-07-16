@@ -44,6 +44,8 @@ public class AgentService {
             Jesteś osobistym asystentem AI. Pomagasz użytkownikowi w pracy i organizacji.
             Odpowiadaj po polsku, zwięźle i konkretnie.
 
+            Rozróżniaj dziś/jutro/wczoraj na podstawie nagłówków sekcji — nie myl ich ze sobą.
+
             ## Baza wiedzy (fragmenty dopasowane do pytania)
             %s
 
@@ -53,6 +55,18 @@ public class AgentService {
             %s
 
             ### Wydarzenia na dziś
+            %s
+
+            ### Zadania jutro
+            %s
+
+            ### Wydarzenia jutro
+            %s
+
+            ### Zadania wczoraj
+            %s
+
+            ### Wydarzenia wczoraj
             %s
 
             ### Otwarte zgłoszenia
@@ -107,10 +121,18 @@ public class AgentService {
 
         List<TaskSummary> todayTasks = liveDataService.getTodayTasks(userId);
         List<EventSummary> todayEvents = liveDataService.getTodayEvents(userId);
+        List<TaskSummary> tomorrowTasks = liveDataService.getTomorrowTasks(userId);
+        List<EventSummary> tomorrowEvents = liveDataService.getTomorrowEvents(userId);
+        List<TaskSummary> yesterdayTasks = liveDataService.getYesterdayTasks(userId);
+        List<EventSummary> yesterdayEvents = liveDataService.getYesterdayEvents(userId);
         List<TicketSummary> openTickets = liveDataService.getOpenTickets(userId);
         log.info("Live data: {} task(s), {} event(s), {} ticket(s)", todayTasks.size(), todayEvents.size(), openTickets.size());
 
-        String systemPrompt = buildSystemPrompt(fragments, todayTasks, todayEvents, openTickets);
+        String systemPrompt = buildSystemPrompt(
+                fragments, todayTasks, todayEvents,
+                tomorrowTasks, tomorrowEvents,
+                yesterdayTasks, yesterdayEvents,
+                openTickets);
 
         String assistantReply = callClaude(systemPrompt, history, req.message());
 
@@ -164,21 +186,15 @@ public class AgentService {
             List<String> fragments,
             List<TaskSummary> todayTasks,
             List<EventSummary> todayEvents,
+            List<TaskSummary> tomorrowTasks,
+            List<EventSummary> tomorrowEvents,
+            List<TaskSummary> yesterdayTasks,
+            List<EventSummary> yesterdayEvents,
             List<TicketSummary> openTickets) {
 
         String fragmentsText = fragments.isEmpty()
                 ? "Brak dopasowanych dokumentów"
                 : String.join("\n---\n", fragments);
-
-        String tasksText = todayTasks.isEmpty()
-                ? "Brak zadań na dziś"
-                : todayTasks.stream().map(t -> "- " + t.title()).collect(Collectors.joining("\n"));
-
-        String eventsText = todayEvents.isEmpty()
-                ? "Brak wydarzeń na dziś"
-                : todayEvents.stream()
-                    .map(e -> "- " + e.startTime() + " " + e.title())
-                    .collect(Collectors.joining("\n"));
 
         String ticketsText = openTickets.isEmpty()
                 ? "Brak otwartych zgłoszeń"
@@ -186,7 +202,29 @@ public class AgentService {
                     .map(t -> "- " + t.title() + " (" + t.statusName() + ")")
                     .collect(Collectors.joining("\n"));
 
-        return SYSTEM_PROMPT_TEMPLATE.formatted(fragmentsText, tasksText, eventsText, ticketsText);
+        return SYSTEM_PROMPT_TEMPLATE.formatted(
+                fragmentsText,
+                tasksText(todayTasks, "Brak zadań na dziś"),
+                eventsText(todayEvents, "Brak wydarzeń na dziś"),
+                tasksText(tomorrowTasks, "Brak zadań na jutro"),
+                eventsText(tomorrowEvents, "Brak wydarzeń na jutro"),
+                tasksText(yesterdayTasks, "Brak zadań na wczoraj"),
+                eventsText(yesterdayEvents, "Brak wydarzeń na wczoraj"),
+                ticketsText);
+    }
+
+    private String tasksText(List<TaskSummary> tasks, String emptyText) {
+        return tasks.isEmpty()
+                ? emptyText
+                : tasks.stream().map(t -> "- " + t.title()).collect(Collectors.joining("\n"));
+    }
+
+    private String eventsText(List<EventSummary> events, String emptyText) {
+        return events.isEmpty()
+                ? emptyText
+                : events.stream()
+                    .map(e -> "- " + e.startTime() + " " + e.title())
+                    .collect(Collectors.joining("\n"));
     }
 
     private String callClaude(String systemPrompt, List<AgentMessage> history, String userMessage) {

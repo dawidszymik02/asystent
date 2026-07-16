@@ -57,8 +57,19 @@ public class LiveDataService {
     }
 
     public List<EventSummary> getTodayEvents(UUID userId) {
-        LocalDate today = LocalDate.now();
-        OffsetDateTime startOfDay = today.atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime();
+        return getEventsForDate(userId, LocalDate.now());
+    }
+
+    public List<EventSummary> getTomorrowEvents(UUID userId) {
+        return getEventsForDate(userId, LocalDate.now().plusDays(1));
+    }
+
+    public List<EventSummary> getYesterdayEvents(UUID userId) {
+        return getEventsForDate(userId, LocalDate.now().minusDays(1));
+    }
+
+    private List<EventSummary> getEventsForDate(UUID userId, LocalDate date) {
+        OffsetDateTime startOfDay = date.atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime();
         OffsetDateTime endOfDay = startOfDay.plusDays(1);
 
         String sql = """
@@ -84,21 +95,33 @@ public class LiveDataService {
                 .list();
     }
 
+    public List<TaskSummary> getTodayTasks(UUID userId) {
+        return getTasksForDate(userId, LocalDate.now());
+    }
+
+    public List<TaskSummary> getTomorrowTasks(UUID userId) {
+        return getTasksForDate(userId, LocalDate.now().plusDays(1));
+    }
+
+    public List<TaskSummary> getYesterdayTasks(UUID userId) {
+        return getTasksForDate(userId, LocalDate.now().minusDays(1));
+    }
+
     /**
      * Kolumny "priority"/"due_date" nie istnieją w tabeli tasks (jest date/completed/position),
      * więc sortowanie odbywa się po position, a priority jest pomijane w TaskSummary.
      */
-    public List<TaskSummary> getTodayTasks(UUID userId) {
+    private List<TaskSummary> getTasksForDate(UUID userId, LocalDate date) {
         String sql = """
                 SELECT id, title, date
                 FROM tasks
-                WHERE user_id = :userId AND date = :today AND completed = false
+                WHERE user_id = :userId AND date = :date AND completed = false
                 ORDER BY position ASC
                 """;
 
         return jdbcClient.sql(sql)
                 .param("userId", userId)
-                .param("today", LocalDate.now())
+                .param("date", date)
                 .query((rs, rowNum) -> new TaskSummary(
                         (UUID) rs.getObject("id"),
                         rs.getString("title"),
